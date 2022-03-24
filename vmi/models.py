@@ -6,30 +6,39 @@ from django.utils import timezone
 """
 Modelos con PrimaryKey
 """
-class Reference (models.Model):
-    idReferencia = models.PositiveSmallIntegerField(primary_key=True, null=False)
+class Referencia (models.Model):
+    idReferencia = models.BigIntegerField(primary_key=True, null=False)
     nombre = models.CharField(max_length=50, null=False, blank=False)
     ean13 = models.CharField(max_length=50, null=False)
     ean8 = models.CharField(max_length=50, null=False)
     ean128 = models.CharField(max_length=50, null=False)
+    def __str__(self):
+        txt = '{0} ({1})'
+        return txt.format(self.nombre, self.idReferencia)
 
 
 class Proveedor (models.Model):
-    idProveedor = models.PositiveSmallIntegerField(primary_key=True, null=False)
+    idProveedor = models.PositiveIntegerField(primary_key=True, null=False)
     nombre = models.CharField(max_length=50, null=False)
-    fecha_creacion = models.DateTimeField(timezone.now())
+    fecha_creacion = models.DateTimeField(auto_now_add=True, editable=False,)
+    def __str__(self):
+        txt = '{0} Fecha ({1})'
+        return txt.format(self.nombre, self.fecha_creacion.strftime('%b/%d/%Y - %H:%M'))
 #    estado = models.BooleanField(default=False)
 
 
 class TipoUnidad (models.Model):
-    idUnidad = models.PositiveSmallIntegerField(primary_key=True, null=False)
+    idUnidad = models.PositiveIntegerField(primary_key=True, null=False)
     tipo_unidad = models.CharField(max_length=50, null=False)
 #    estado = models.BooleanField(default=False)
 
 
 class Sede (models.Model):
-    idSede = models.PositiveSmallIntegerField(primary_key=True, null=False)
+    idSede = models.PositiveIntegerField(primary_key=True, null=False)
     nombre_sede = models.CharField(max_length=50, null=False)
+    def __str__(self):
+        txt = '{0} (ID {1})'
+        return txt.format(self.nombre_sede, self.idSede)
 #    estado = models.BooleanField(default=False)
 
 
@@ -39,17 +48,18 @@ Modelos con PrimaryKey y ForeignKey
 
 
 class Bodega (models.Model):
-    idBodega = models.PositiveSmallIntegerField(primary_key=True)
+    idBodega = models.PositiveIntegerField(primary_key=True)
     nombre = models.CharField(max_length=50, null=False)
     idSede = models.ForeignKey(Sede, null=False, on_delete=models.CASCADE)
+    def __str__(self):
+        return self.nombre
 #    estado = models.BooleanField(default=False)
 
 
 class Factura (models.Model):
-    idFactura = models.PositiveSmallIntegerField(primary_key=True, null=False)
-    idProveedor = models.ForeignKey(
-        Proveedor, null=False, blank=False, on_delete=models.CASCADE)
-    fechaFactura = models.DateTimeField(timezone.now())
+    idFactura = models.PositiveIntegerField(primary_key=True, null=False)
+    idProveedor = models.ForeignKey(Proveedor, null=False, blank=False, on_delete=models.CASCADE)
+    fechaFactura = models.DateTimeField(auto_now_add=True, editable=False)
 #    estado = models.BooleanField(default=False)
 
 
@@ -62,58 +72,44 @@ class TipoMov (models.Model):
 
 class Pedido (models.Model):
     idPedido = models.AutoField(primary_key=True)
-    idProveedor = models.ForeignKey(
-        Proveedor, null=False, blank=False, on_delete=models.CASCADE)
-    fecha_pedido = models.DateTimeField(timezone.now())
+    idProveedor = models.ForeignKey(Proveedor, null=False, blank=False, on_delete=models.CASCADE)
+    fecha_pedido = models.DateTimeField(auto_now_add=True, editable=False)
 #    estado = models.BooleanField(default=False)
 
 class PedidosMov (models.Model):
-    idPedido = models.ForeignKey(
-        Pedido, null=False, blank=False, on_delete=models.CASCADE)
-    idNumero = models.PositiveSmallIntegerField(primary_key=True, null=False)
-    idReferencia = models.ForeignKey(Reference, null=False, blank=False, on_delete=models.CASCADE)
-    fecha_pedido = models.DateTimeField(timezone.now())
+    idPedido = models.ForeignKey(Pedido, null=False, blank=False, on_delete=models.CASCADE)
+    idNumero = models.PositiveIntegerField(primary_key=True, null=False)
+    idReferencia = models.ForeignKey(Referencia, null=False, blank=False, on_delete=models.CASCADE)
+    fecha_pedido = models.DateTimeField(auto_now_add=True, editable=False)
     cantidad = models.PositiveIntegerField(null=False, blank=False, default=0)
-    idUnidadCompra = models.ForeignKey(
-        TipoUnidad, null=False, blank=False, on_delete=models.CASCADE)
+    idUnidadCompra = models.ForeignKey(TipoUnidad, null=False, blank=False, on_delete=models.CASCADE)
 
 
 class Inventario (models.Model):
-    idReferencia = models.ForeignKey(
-        Reference, null=False, blank=False, on_delete=models.CASCADE)
-    idbodega = models.ForeignKey(
-        Bodega, null=False, blank=False, on_delete=models.CASCADE)
+    idReferencia = models.ForeignKey(Referencia, null=False, blank=False, on_delete=models.CASCADE)
+    idbodega = models.ForeignKey(Bodega, null=False, blank=False, on_delete=models.CASCADE)
     saldo = models.PositiveIntegerField('Saldo')
 #    estado = models.BooleanField(default=False)
 
 
 class MovInventario (models.Model):
     idMovimiento = models.AutoField(primary_key=True)
-    idReferencia = models.ForeignKey(
-        Reference, null=False, blank=False, on_delete=models.CASCADE)
-    idBodega = models.ForeignKey(
-        Bodega, null=False, blank=False, on_delete=models.CASCADE)
-    idTipoUnidadMov = models.ForeignKey(
-        TipoUnidad, null=False, blank=False, on_delete=models.CASCADE)
+    idReferencia = models.ForeignKey(Referencia, null=False, blank=False, on_delete=models.CASCADE)
+    idBodega = models.ForeignKey(Bodega, null=False, blank=False, on_delete=models.CASCADE)
+    idTipoUnidadMov = models.ForeignKey(TipoUnidad, null=False, blank=False, on_delete=models.CASCADE)
     cantidad = models.PositiveIntegerField(null=False)
-    idTipoMov = models.ForeignKey(
-        TipoMov, null=False, blank=False, on_delete=models.CASCADE)
-    fechaMov = models.DateTimeField(timezone.now())
-    idFactura = models.ForeignKey(
-        Factura, null=False, on_delete=models.CASCADE)
+    idTipoMov = models.ForeignKey(TipoMov, null=False, blank=False, on_delete=models.CASCADE)
+    fechaMov = models.DateTimeField(auto_now_add=True, editable=False)
+    idFactura = models.ForeignKey(Factura, null=False, on_delete=models.CASCADE)
 
 
 class FacturaPedido (models.Model):
-    idFactura = models.ForeignKey(
-        Factura, null=False, blank=False, on_delete=models.CASCADE)
-    idPedido = models.ForeignKey(
-        Pedido, null=False, blank=False, on_delete=models.CASCADE)
+    idFactura = models.ForeignKey(Factura, null=False, blank=False, on_delete=models.CASCADE)
+    idPedido = models.ForeignKey(Pedido, null=False, blank=False, on_delete=models.CASCADE)
 
 
 class FacturasMov (models.Model):
-    idfactura = models.ForeignKey(
-        Factura, null=False, blank=False, on_delete=models.CASCADE)
+    idfactura = models.ForeignKey(Factura, null=False, blank=False, on_delete=models.CASCADE)
     idNumero = models.AutoField(primary_key=True)
-    ideReferencia = models.ForeignKey(
-        Reference, null=False, blank=False, on_delete=models.CASCADE)
-    fechaPedido = models.DateTimeField(auto_now_add=True)
+    ideReferencia = models.ForeignKey(Referencia, null=False, blank=False, on_delete=models.CASCADE)
+    fechaPedido = models.DateTimeField(auto_now_add=True, editable=False)
