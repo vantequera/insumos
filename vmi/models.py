@@ -5,6 +5,7 @@ from django.utils import timezone
 
 """
 Modelos con PrimaryKey
+ORM -> Object Relational Maping
 """
 class Referencia (models.Model):
     idReferencia = models.BigIntegerField(primary_key=True, null=False)
