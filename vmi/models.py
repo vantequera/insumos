@@ -12,6 +12,7 @@ class Referencia (models.Model):
     ean13 = models.CharField(max_length=50, null=False)
     ean8 = models.CharField(max_length=50, null=False)
     ean128 = models.CharField(max_length=50, null=False)
+    cantidad = models.IntegerField(null=False, blank=False, default=0)
     def __str__(self):
         return self.nombre
 #        txt = '{0} ({1})'
@@ -66,8 +67,9 @@ class Factura (models.Model):
     idProveedor = models.ForeignKey(Proveedor, null=False, blank=False, on_delete=models.CASCADE)
     fechaFactura = models.DateTimeField(auto_now_add=True, editable=False)
     def __str__(self):
-        txt = '{0} - {1}'.format(self.idProveedor, self.fechaFactura.strftime('%b/%d/%Y'))
-        return txt
+        return str(self.idProveedor)
+        # txt = '{0} - {1}'.format(self.idProveedor, self.fechaFactura.strftime('%b/%d/%Y'))
+        # return txt
 #    estado = models.BooleanField(default=False)
 
 
@@ -75,7 +77,9 @@ class TipoMov (models.Model):
     idTipoMov = models.AutoField(primary_key=True, null=False)
     tipo_mov = models.CharField(max_length=50, null=False)
     signo = models.PositiveSmallIntegerField(null=False)
-#    estado = models.BooleanField(default=False)
+    # estado = models.BooleanField(default=False)
+    def __str__(self):
+        return self.tipo_mov
 
 
 class Pedido (models.Model):
@@ -91,7 +95,7 @@ class PedidosMov (models.Model):
     idNumero = models.PositiveIntegerField(primary_key=True, null=False)
     idReferencia = models.ForeignKey(Referencia, null=False, blank=False, on_delete=models.CASCADE)
     fecha_pedido = models.DateTimeField(auto_now_add=True, editable=False)
-    cantidad = models.PositiveIntegerField(null=False, blank=False, default=0)
+    cantidad = models.PositiveIntegerField(null=False, blank=False, default=0, editable=False)
     idUnidadCompra = models.ForeignKey(TipoUnidad, null=False, blank=False, on_delete=models.CASCADE)
 
     def __str__(self):
@@ -103,6 +107,9 @@ class Inventario (models.Model):
     idReferencia = models.ForeignKey(Referencia, null=False, blank=False, on_delete=models.CASCADE)
     idbodega = models.ForeignKey(Bodega, null=False, blank=False, on_delete=models.CASCADE)
     saldo = models.PositiveIntegerField('Saldo')
+    def __str__(self):
+        txt = '{0} Cantidad: {1}'.format(self.idReferencia, self.saldo)
+        return str(txt)
 #    estado = models.BooleanField(default=False)
 
 
@@ -115,6 +122,9 @@ class MovInventario (models.Model):
     idTipoMov = models.ForeignKey(TipoMov, null=False, blank=False, on_delete=models.CASCADE)
     fechaMov = models.DateTimeField(auto_now_add=True, editable=False)
     idFactura = models.ForeignKey(Factura, null=False, on_delete=models.CASCADE)
+    def __str__(self):
+        txt = '{0} To: {1} Cant: {2}'.format(self.idReferencia, self.idBodega, self.cantidad)
+        return str(txt)
 
 
 class FacturaPedido (models.Model):
@@ -131,5 +141,6 @@ class FacturasMov (models.Model):
     idReferencia = models.ForeignKey(Referencia, null=False, blank=False, on_delete=models.CASCADE)
     fechaPedido = models.DateTimeField(auto_now_add=True, editable=False)
     def __str__(self):
-        txt = '{0} ({1})'.format(self.ideReferencia, self.idfactura)
-        return str(txt)
+        return str(self.idReferencia)
+        # txt = '{0} ({1})'.format(self.idReferencia, self.idfactura)
+        # return str(txt)
