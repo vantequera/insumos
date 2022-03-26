@@ -49,6 +49,12 @@ class Sede (models.Model):
         # return txt.format(self.nombre_sede, self.idSede)
 
 
+class Pais (models.Model):
+    idPais = models.integerField(primary_key=True, null=False)
+    nombre = models.CharField(max_length=50, null=False)
+    codigo_dane = models.CharField(max_length=20, null=False)
+#    estado = models.BooleanField(default=False)
+
 """
 Modelos con PrimaryKey y ForeignKey
 """
@@ -90,6 +96,29 @@ class Pedido (models.Model):
 #    estado = models.BooleanField(default=False)
     def __str__(self):
         return str(self.idProveedor)
+
+
+class Departamento (models.Model):
+    id_departamento = models.AutoField(primary_key=True)
+    nombre = models.CharField(max_length=50, null=False)
+    id_pais = models.ForeignKey(Pais, null=False, blank=False, on_delete=models.CASCADE)
+    codigo_dane = models.CharField(max_length=50)
+#    estado = models.BooleanField(default=False)
+
+
+class Municipio (models.Model):
+    id_municipio = models.AutoField(primary_key=True)
+    nombre = models.CharField(max_length=50, null=False)
+    id_departamento = models.ForeignKey(Departamento, null=False, blank=False, on_delete=models.CASCADE)
+    codigo_dane = models.CharField(max_length=50)
+#    estado = models.BooleanField(default=False)
+
+
+class SaldoHistorico (models.Model):
+    id_referencia = models.AutoField(primary_key=True)
+    id_bodega = models.ForeignKey(Bodega, null=False, blank=False)
+    cantidad = models.IntegerField(null=False)
+
 
 class PedidosMov (models.Model):
     idPedido = models.ForeignKey(Pedido, null=False, blank=False, on_delete=models.CASCADE)
