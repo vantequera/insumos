@@ -16,11 +16,9 @@ class Referencia (models.Model):
     ean8 = models.CharField(max_length=50, null=False)
     ean128 = models.CharField(max_length=50, null=False)
     cantidad = models.IntegerField(null=False, blank=False, default=0)
-
     def __str__(self):
         return self.nombre
 #        txt = '{0} ({1})'
-#        return txt.format(self.nombre, self.idReferencia)
 
 
 class Proveedor (models.Model):
@@ -28,7 +26,6 @@ class Proveedor (models.Model):
     nombre = models.CharField(max_length=50, null=False)
     fecha_creacion = models.DateTimeField(auto_now_add=True, editable=False,)
 #    estado = models.BooleanField(default=False)
-
     def __str__(self):
         return self.nombre
 #        txt = '{0} Fecha ({1})'
@@ -60,6 +57,12 @@ class TipoMov (models.Model):
     def __str__(self):
         return self.tipo_mov
 
+
+class Pais (models.Model):
+    idPais = models.integerField(primary_key=True, null=False)
+    nombre = models.CharField(max_length=50, null=False)
+    codigo_dane = models.CharField(max_length=20, null=False)
+#    estado = models.BooleanField(default=False)
 
 """
 Modelos con PrimaryKey y ForeignKey
@@ -99,7 +102,6 @@ class Factura (models.Model):
     idProveedor = models.ForeignKey(Proveedor, on_delete=models.CASCADE)
     fechaFactura = models.DateTimeField(auto_now_add=True, editable=False)
 #    estado = models.BooleanField(default=False)
-
     def __str__(self):
         return str(self.idProveedor)
         # txt = '{0} - {1}'.format(self.idProveedor, self.fechaFactura.strftime('%b/%d/%Y'))
@@ -158,6 +160,7 @@ class PedidosMov (models.Model):
         return str(txt.format(self.idPedido, self.idReferencia, self.cantidad))
 
 
+
 class Inventario (models.Model):
     idReferencia = models.ForeignKey(
         Referencia, null=False, blank=False, on_delete=models.CASCADE)
@@ -165,7 +168,6 @@ class Inventario (models.Model):
         Bodega, null=False, blank=False, on_delete=models.CASCADE)
     saldo = models.PositiveIntegerField('Saldo')
 #    estado = models.BooleanField(default=False)
-
     def __str__(self):
         txt = '{0} Cantidad: {1}'.format(self.idReferencia, self.saldo)
         return str(txt)
