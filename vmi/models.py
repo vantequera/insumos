@@ -155,10 +155,8 @@ class PedidosMov (models.Model):
 
 
 class Inventario (models.Model):
-    idReferencia = models.ForeignKey(
-        Referencia, null=False, blank=False, on_delete=models.CASCADE)
-    idbodega = models.ForeignKey(
-        Bodega, null=False, blank=False, on_delete=models.CASCADE)
+    idReferencia = models.ForeignKey(Referencia, null=False, blank=False, on_delete=models.CASCADE)
+    idbodega = models.ForeignKey(Bodega, null=False, blank=False, on_delete=models.CASCADE)
     saldo = models.PositiveIntegerField('Saldo')
 #    estado = models.BooleanField(default=False)
     def __str__(self):
@@ -168,18 +166,13 @@ class Inventario (models.Model):
 
 class MovInventario (models.Model):
     idMovimiento = models.AutoField(primary_key=True)
-    idReferencia = models.ForeignKey(
-        Referencia, null=False, blank=False, on_delete=models.CASCADE)
-    idBodega = models.ForeignKey(
-        Bodega, null=False, blank=False, on_delete=models.CASCADE)
-    idTipoUnidadMov = models.ForeignKey(
-        TipoUnidad, null=False, blank=False, on_delete=models.CASCADE)
+    idReferencia = models.ForeignKey(Referencia, null=False, blank=False, on_delete=models.CASCADE)
+    idBodega = models.ForeignKey(Bodega, null=False, blank=False, on_delete=models.CASCADE)
+    idTipoUnidadMov = models.ForeignKey(TipoUnidad, null=False, blank=False, on_delete=models.CASCADE)
     cantidad = models.PositiveIntegerField(null=False)
-    idTipoMov = models.ForeignKey(
-        TipoMov, null=False, blank=False, on_delete=models.CASCADE)
+    idTipoMov = models.ForeignKey(TipoMov, null=False, blank=False, on_delete=models.CASCADE)
     fechaMov = models.DateTimeField(auto_now_add=True, editable=False)
-    idFactura = models.ForeignKey(
-        Factura, on_delete=models.CASCADE)
+    idFactura = models.ForeignKey(Factura, on_delete=models.CASCADE)
 
     def __str__(self):
         txt = '{0} To: {1} Cant: {2}'.format(
@@ -188,10 +181,8 @@ class MovInventario (models.Model):
 
 
 class FacturaPedido (models.Model):
-    idFactura = models.ForeignKey(
-        Factura, null=False, blank=False, on_delete=models.CASCADE)
-    idPedido = models.ForeignKey(
-        Pedido, null=False, blank=False, on_delete=models.CASCADE)
+    idFactura = models.ForeignKey(Factura, null=False, blank=False, on_delete=models.CASCADE)
+    idPedido = models.ForeignKey(Pedido, null=False, blank=False, on_delete=models.CASCADE)
 
     def __str__(self):
         txt = '{} / {}'.format(self.idFactura, self.idPedido)
@@ -199,11 +190,9 @@ class FacturaPedido (models.Model):
 
 
 class FacturasMov (models.Model):
-    idfactura = models.ForeignKey(
-        Factura, null=False, blank=False, on_delete=models.CASCADE)
+    idfactura = models.ForeignKey(Factura, null=False, blank=False, on_delete=models.CASCADE)
     idNumero = models.AutoField(primary_key=True)
-    idReferencia = models.ForeignKey(
-        Referencia, null=False, blank=False, on_delete=models.CASCADE)
+    idReferencia = models.ForeignKey(Referencia, null=False, blank=False, on_delete=models.CASCADE)
     fechaPedido = models.DateTimeField(auto_now_add=True, editable=False)
 
     def __str__(self):

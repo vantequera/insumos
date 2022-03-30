@@ -2,7 +2,7 @@ from dataclasses import fields
 from pyexpat import model
 from django.contrib import admin
 
-from vmi.models import Bodega, Factura, FacturaPedido, FacturasMov, Inventario, MovInventario, Pedido, PedidosMov, Proveedor, Referencia, Sede, TipoMov, TipoUnidad
+from vmi.models import Bodega, Departamento, Factura, FacturaPedido, FacturasMov, Inventario, MovInventario, Municipio, Pais, Pedido, PedidosMov, Proveedor, Referencia, SaldoActual, Sede, TipoMov, TipoUnidad
 
 
 class InventarioInLine(admin.StackedInline):
@@ -42,3 +42,7 @@ admin.site.register(Inventario)
 admin.site.register(MovInventario)
 admin.site.register(FacturaPedido)
 admin.site.register(FacturasMov, FacturasMovAdmin)
+admin.site.register(Pais)
+admin.site.register(Departamento)
+admin.site.register(Municipio)
+admin.site.register(SaldoActual)
