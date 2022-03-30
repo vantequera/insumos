@@ -77,7 +77,7 @@ WSGI_APPLICATION = 'insumos.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'insumos',
+        'NAME': 'pruebas',
         'USER': 'lesavant',
         'PASSWORD': '2209',
 #        'HOST': 'localhost',
