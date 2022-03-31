@@ -10,14 +10,15 @@ ORM -> Object Relational Maping
 
 
 class Referencia (models.Model):
-    idReferencia = models.BigIntegerField(primary_key=True, null=False)
+    idReferencia = models.AutoField(primary_key=True, null=False)
     nombre = models.CharField(max_length=50, null=False, blank=False)
-    ean13 = models.CharField(max_length=50, null=False)
     ean8 = models.CharField(max_length=50, null=False)
+    ean13 = models.CharField(max_length=50, null=False)
     ean128 = models.CharField(max_length=50, null=False)
     cantidad = models.IntegerField(null=False, blank=False, default=0)
     def __str__(self):
-        return self.nombre
+        txt = '{0}'
+        return txt.format(self.nombre.capitalize())
 #        txt = '{0} ({1})'
 
 
@@ -33,7 +34,7 @@ class Proveedor (models.Model):
 
 
 class TipoUnidad (models.Model):
-    idUnidad = models.PositiveIntegerField(primary_key=True, null=False)
+    idUnidad = models.AutoField(primary_key=True, null=False)
     tipo_unidad = models.CharField(max_length=50, null=False)
 #    estado = models.BooleanField(default=False)
 
@@ -56,6 +57,9 @@ class Pais (models.Model):
     nombre = models.CharField(max_length=50, null=False)
     codigo_dane = models.CharField(max_length=20, null=False)
 #    estado = models.BooleanField(default=False)
+    def __str__(self):
+        return self.nombre
+
 
 """
 Modelos con PrimaryKey y ForeignKey
@@ -68,6 +72,8 @@ class Departamento (models.Model):
     id_pais = models.ForeignKey(Pais, on_delete=models.CASCADE)
     codigo_dane = models.CharField(max_length=50)
 #    estado = models.BooleanField(default=False)
+    def __str__(self):
+        return self.nombre
 
 
 class Municipio (models.Model):
@@ -76,6 +82,8 @@ class Municipio (models.Model):
     id_departamento = models.ForeignKey(Departamento, on_delete=models.CASCADE)
     codigo_dane = models.CharField(max_length=50)
 #    estado = models.BooleanField(default=False)
+    def __str__(self):
+        return self.nombre
 
 
 class Sede (models.Model):
