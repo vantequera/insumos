@@ -201,7 +201,7 @@ class PedidosMov (models.Model):
 class Inventario (models.Model):
     idReferencia = models.ForeignKey(Referencia, null=False, blank=False, on_delete=models.CASCADE)
     idbodega = models.ForeignKey(Bodega, null=False, blank=False, on_delete=models.CASCADE)
-    saldo = models.PositiveIntegerField('Saldo')
+    saldo = models.DecimalField(max_digits=15, decimal_places=3)
 #    estado = models.CharField(max_length=6)
 
     def __str__(self):
