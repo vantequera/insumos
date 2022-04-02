@@ -8,9 +8,7 @@ class InventarioInLine(admin.StackedInline):
     extra = 2
 
 class ReferenciaAdmin(admin.ModelAdmin):
-#    fields = ["IdReferencia", "nombre"]
     inlines = [InventarioInLine]
-#    list_display = ("nombre", "ean8", "cantidad")
     search_fields = ["idReferencia", "ean13"]
 
 
@@ -37,6 +35,9 @@ class DepartamentoAdmin(admin.ModelAdmin):
 class MunicipioAdmin(admin.ModelAdmin):
     list_display = ("nombre", "codigo_dane", "id_departamento")
 
+
+class PedidoAdmin(admin.ModelAdmin):
+    list_display = ("idProveedor", "es_reciente")
 # Register your models here.
 
 admin.site.register(Referencia, ReferenciaAdmin)
@@ -46,7 +47,7 @@ admin.site.register(Sede)
 admin.site.register(Bodega, BodegaAdmin)
 admin.site.register(Factura, FacturaAdmin)
 admin.site.register(TipoMov)
-admin.site.register(Pedido)
+admin.site.register(Pedido, PedidoAdmin)
 admin.site.register(PedidosMov)
 admin.site.register(Inventario)
 admin.site.register(MovInventario)
