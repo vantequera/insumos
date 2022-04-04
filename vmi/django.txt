@@ -1,0 +1,115 @@
+
+
+=> Q lookups:
+    Entrys.objects.filter(Q(pub_date__year=2020) | Q(pub_date__year=2019), Q(rating=7))
+    Entrys.objects.filter(Q(headline__startwith='new'), Q(pub_date__year=2020))
+
+=> Objetos Relacionados:
+    user1 = Author.objects.get(name='name')
+    user1.entry_set.all()
+    ManyToManyField(Class, related_name='entries')
+    user1.entries.all()
+
+=> URLs y Paths:
+    path('int:<id>/', dumm_view, name='entry_detail') => https://lesavant.dev/entries/2/
+    path('<slug:name>/', dumm_view, name='entry_detail') => https://lesavant.dev/entries/post-sobre-go/  "La mejor manera"
+    Expresiones regulares => path('(?P<id>[0-9]{4})/$', dumm_view, name='entry_detail')
+                            path('(?P<id>[0-9]{4})/(?P<slug>[\w-]+)/$', dumm_view, name='entry_detail')
+
+=> namespaces: 'Una manera sencilla de mostrar y hacer referencia a los URLs'
+    def get_absolute_url(self):
+        return redirect(reverse("entries:entry_detail", kwargs={'id': self.id}))
+
+=> Vistas o Views:
+    Se realiza de esta manera pero la mejor organizacion es con clases
+    def dumm_view(request):
+        now = datetime.datetime.now()
+        html = "<html><body>It isn now %s</body></html>" % now
+        return HttpResponse(html)
+
+=> Status Code:
+    200 => Todo correcto
+    404 => No encontrado
+    201 => Post correcto
+    500 => Error de servidor
+
+    def status_code_view(request): #Para enviar un reporte#
+        return HttpResponse(status=201)
+
+    def status_code_view(request, exception):  <- B: Agregar una exception -handler500 no necesita exception-
+        return HttpResponseNotFound('Pagina web no encontrada, Error 404')
+
+    => Automatizar el Status Code:
+        project.urls -> handler404 = 'my_app.views.status_code_view' -> B
+
+=> Shortcuts:
+    my_app.views => *render*
+    def entry_list(request):
+        return render(request, "my_app/post_list.html", {})
+
+    my_app.urls import entry_list
+    *Agregar al Path deseado*
+    *Agregar templates*
+
+    my_app.views => *redirect*
+    def redirect_back_home(request):
+        return redirect('entries:entry_list', id=1) => Otro metodo return redirect('/entries/1')
+        *Modificar el dumm_view => dumm_view(request,id)
+
+=> Vistas basadas en clases:
+    from django.views import View
+    class MyclassView(View):
+        def get(self, request):
+            print("Correc codigo")
+            return HttpResponse("Response from CBV")
+    *Ir a my_app.urls*
+        import MyclassView
+    path('', MyclassView.as_view(), name='entry_list')
+
+=> Generic Base Views:
+    *my_app.views
+    from django.views.generic import ListView
+    from .models import Entry
+    class MyListView(ListView):
+        model = Entry
+    *my_app.urls
+    from .views import MyListView
+    path('', MyListView.as_view(), name='entry_list') <=> *Crear html = entry_list
+
+=> Plantillas:
+    *Cambiar el directorio de Plantillas, crear carpeta en la raiz del proyecto*
+    *my_project.settings
+    TEMPLATES = [
+        {
+            'BACKEND': 'django...........',
+            'DIRS': [os.path.join(BASE_DIR, 'templates')],
+        }
+    ]
+
+=> Filtros:
+    *post_list.html
+    {% for post in post_list %}
+        <li>{{ post.headline|title }}</li> # Entrega el titulo con Capitalize
+        <span>{{ post.pub_date|date:"Y-m-d" }}</span> # O puede ser |timesince }} ago
+    {% endfor %}
+    {% if request.user.is_authenticated %}
+        <h1>Cualquier Logica</h1>
+    {% else %}
+        <h6>Devolver a autenticar</h6>
+    {% endif %}
+
+=> Modulo Humanize:
+    *my_project.settings
+    * INSTALLED_APPS =[
+        'django.contrib.humanize',
+    ]
+    *post_list.html
+    {% load humanize %} * Podemos usar 6 filtros que vienen con django
+    <span>{{ post.rating|apnumber }}</span>
+    {#
+        incomma => 4500 -> 4,500 ,
+        intword => 1000000 -> 1 Millon ,
+        naturalday => 03 abril 2022 -> Yesterday ,
+        naturaltime => 03 abril 2022 -> 16 horas y 4 seg atras ,
+        ordinal => 1, 2, 3 -> 1ro, 2do, 3ro
+    #}
