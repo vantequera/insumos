@@ -113,3 +113,53 @@
         naturaltime => 03 abril 2022 -> 16 horas y 4 seg atras ,
         ordinal => 1, 2, 3 -> 1ro, 2do, 3ro
     #}
+    => Formularios:
+        *form.html
+        <form method="POST">
+            {% csrf_token %}
+            {{ form.as_p }}  <== .as_p es un filtro que podemos aplicar
+            <button type="submit">Submit</button>
+        </form>
+
+        *my_app.forms
+        from django import forms
+        from .models import Blog
+        class BlogForm(forms.Form):
+            name = forms.CharField(label="Enter the blog name", max_length=100)
+            tagline = forms.CharField(widget=forms.Textarea)
+
+        class BlogModelForm(forms.ModelForm):
+            class Meta:
+                model = Blog
+                fields = "__all__"
+                # exclude = 'anyone'
+
+        *my_app.views
+        from .forms import BlogForm, BlogModelForm
+        def post_create(request):
+        * Forma numero 1 de realizar un POST de datos hacia el BACKEND *
+            form = BlogForm(request.POST or None) <== Es para que se cree cuando SOLO sea POST request
+            if form.is_valid():
+                name = form.cleaned_data.get("name")
+                tagline = form.cleaned_data.get("tagline")
+                blog = Blog(name=name, tagline=tagline)
+                blog.save()
+                return redirect('entries:entry_list')
+            context = {
+                'form': form
+            }
+            return render(request, "form.html", context)
+        * Forma numero 2 de realizar un POST de datos hacia el BACKEND *
+            # form = BlogModelForm(request.POST or None)
+            # if form.is_valid():
+            #     form.save()
+            #     return redirect("entries:entry_list")
+            # context = {"form": form}
+            # return render(request, "form.html", context)
+
+        *my_app.urls
+        import post_create
+        path('create/', post_create, name='entry_create'),
+
+    => Pillow -> Trabajar con imagenes en Django
+        2:46:06
