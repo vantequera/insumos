@@ -1,8 +1,11 @@
 
 
+
 => Q lookups:
     Entrys.objects.filter(Q(pub_date__year=2020) | Q(pub_date__year=2019), Q(rating=7))
     Entrys.objects.filter(Q(headline__startwith='new'), Q(pub_date__year=2020))
+
+
 
 => Objetos Relacionados:
     user1 = Author.objects.get(name='name')
@@ -10,15 +13,21 @@
     ManyToManyField(Class, related_name='entries')
     user1.entries.all()
 
+
+
 => URLs y Paths:
     path('int:<id>/', dumm_view, name='entry_detail') => https://lesavant.dev/entries/2/
     path('<slug:name>/', dumm_view, name='entry_detail') => https://lesavant.dev/entries/post-sobre-go/  "La mejor manera"
     Expresiones regulares => path('(?P<id>[0-9]{4})/$', dumm_view, name='entry_detail')
                             path('(?P<id>[0-9]{4})/(?P<slug>[\w-]+)/$', dumm_view, name='entry_detail')
 
+
+
 => namespaces: 'Una manera sencilla de mostrar y hacer referencia a los URLs'
     def get_absolute_url(self):
         return redirect(reverse("entries:entry_detail", kwargs={'id': self.id}))
+
+
 
 => Vistas o Views:
     Se realiza de esta manera pero la mejor organizacion es con clases
@@ -26,6 +35,8 @@
         now = datetime.datetime.now()
         html = "<html><body>It isn now %s</body></html>" % now
         return HttpResponse(html)
+
+
 
 => Status Code:
     200 => Todo correcto
@@ -42,6 +53,8 @@
     => Automatizar el Status Code:
         project.urls -> handler404 = 'my_app.views.status_code_view' -> B
 
+
+
 => Shortcuts:
     my_app.views => *render*
     def entry_list(request):
@@ -56,7 +69,9 @@
         return redirect('entries:entry_list', id=1) => Otro metodo return redirect('/entries/1')
         *Modificar el dumm_view => dumm_view(request,id)
 
-=> Vistas basadas en clases:
+
+
+=> Vistas basadas en clases #1:
     from django.views import View
     class MyclassView(View):
         def get(self, request):
@@ -65,6 +80,8 @@
     *Ir a my_app.urls*
         import MyclassView
     path('', MyclassView.as_view(), name='entry_list')
+
+
 
 => Generic Base Views:
     *my_app.views
@@ -76,6 +93,8 @@
     from .views import MyListView
     path('', MyListView.as_view(), name='entry_list') <=> *Crear html = entry_list
 
+
+
 => Plantillas:
     *Cambiar el directorio de Plantillas, crear carpeta en la raiz del proyecto*
     *my_project.settings
@@ -85,6 +104,8 @@
             'DIRS': [os.path.join(BASE_DIR, 'templates')],
         }
     ]
+
+
 
 => Filtros:
     *post_list.html
@@ -97,6 +118,8 @@
     {% else %}
         <h6>Devolver a autenticar</h6>
     {% endif %}
+
+
 
 => Modulo Humanize:
     *my_project.settings
@@ -113,6 +136,8 @@
         naturaltime => 03 abril 2022 -> 16 horas y 4 seg atras ,
         ordinal => 1, 2, 3 -> 1ro, 2do, 3ro
     #}
+
+
     => Formularios:
         *form.html
         <form method="POST">
@@ -161,5 +186,316 @@
         import post_create
         path('create/', post_create, name='entry_create'),
 
+
     => Pillow -> Trabajar con imagenes en Django
-        2:46:06
+        *my_app.models
+        image = models.ImageField(blank=True, null=True)
+        *makemigrations, migrate, runserver*
+        *post_list.html
+        <ul>
+        {% for post in post_list %}
+            <li>{{ post.headline|title }}
+                <span>{{ post.pub_date|timesince }} ago</span>
+                <span>{{ post.rating|apnumber }}</span>
+            </li>
+        {% endfor %}
+
+        {% for blog in blog_list %}
+        <p>{{ blog }}</p>
+        <img src="{{ blog.image.url }}"/>
+        {% endfor %}
+        {# comments #}
+        </ul>
+
+        *folder principal /static
+        *Borrar todo anterior para evitar conflictos = my_class.objects.all().delete()*
+
+        *my_app.views
+        form = BlogModelForm(request.POST or None, request.FILE or None)
+
+        *form.html
+        <form method="POST" enctype="multipart/form-data"></form>
+
+        *my_project.settings
+        MEDIA_URL = '/media/'
+        STATICFILES_DIR = [os.path.join(BASE_DIR, 'static')]
+        STATIC_ROOT = os.path.join(BASE_DIR, 'static_root')
+        MEDIA_ROOT = os.path.join(BASE_DIR, 'media_root')
+
+        *my_project.urls
+        from django.conf import settings
+        from django.conf.urls.static import static
+
+        if settings.DEBUG:
+            urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+            urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+
+
+
+=> Vistas basadas en clases #2:
+    *Visualizar Form Views en Class Base Views*
+    *my_app.views
+    from django.views.generic.edit import FormView
+
+    class EntryFormView(FormView):
+    template_name = 'post.html'
+    form_class = BlogModelForm
+    success_url = '/'
+    def form_valid(self, form):
+        form.save()
+        return super().form_valid(form)
+
+    *my_app.urls
+    from .views import EntryFormView
+    path('create/', EntryFormView.as_view(), name='entry_create)
+
+
+
+=> Configuración del proyecto:
+    Django-admin startproject my_project
+    *Modificar carpeta inferior => src*
+
+    *my_project.settings
+    STATIC_URL = '/static/'
+    MEDIA_URL = '/media/'
+    STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
+    STATIC_ROOT = os.path.join(BASE_DIR, 'static_root')
+    MEDIA_ROOT = os.path.join(BASE_DIR, 'media_root')
+
+    *my_project.urls
+    from django.conf import settings
+    from django.conf.urls.static import static
+    if settings.DEBUG:
+        urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+        urlpatterns += static(settings.STATIC_ROOT, document_root=settings.STATIC_ROOT)
+
+
+
+=> Agregando Bootstrap:
+    *my_project.settings
+    TEMPLATES = [
+        {
+            'DIRS': [os.path.join(BASE_DIR, 'templates')],
+        }
+    ]
+    */src/templates
+    base.html
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p" crossorigin="anonymous" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.10.2/dist/umd/popper.min.js" integrity="sha384-7+zCNj/IqJ95wo16oMtfsKbZ9ccEh31eOz1HGyDuCQ6wgnyJNSYdrPa03rtR1zdB" crossorigin="anonymous" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.min.js" integrity="sha384-QJHtvGhmr9XOIpI6YVutG+2QOK9T+ZnN4kzFN1RtK3zEFEIsxhlmWl5/YESvpZ13" crossorigin="anonymous" defer></script>
+   {% block content %}
+
+    {{% endblock content %}}
+
+
+
+=> Modelos Iniciales y Usuario Personalizado:
+    $pip install django-allauth
+
+    *my_project.settings
+    AUTHENTICATION_BACKEND = [
+        'django.contrib.auth.backends.ModelBackend',
+        'allauth.account.auth_backends.AuthenticationBackend',
+    ]
+    INSTALLED_APPS = [
+        'django.contrib.auth',
+        'django.contrib.messages',
+        'django.contrib.sites',
+        'allauth',
+        'allauth.account',
+        'allauth.socialaccount',
+    ]
+    SITE_ID = 1
+    AUTH_USER_MODEL = 'my_app.User'
+
+    *my_app.urls
+    urlpatterns = [
+        ...
+        path('account/', include('allauth.urls')),
+    ]
+
+    *my_app.models
+    from django.contrib.auth.models import AbstractUser
+
+    class User(AbstractUser):
+        pass
+
+        def __str__(self):
+            return self.username
+
+    *my_app.admin
+    from .models import User, ...
+    admin.site.register(User)
+
+
+
+=> Vistas del sitio:
+    => Class Base Views
+        *my_app.views
+        from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
+        from .models import Post, User, ...
+
+        class PostListViews(ListView):
+            model = Post
+
+        class PostDetailViews(DetailView):
+            model = Post
+
+        class PostCreateViews(CreateView):
+            model = Post
+
+        class PostUpdateViews(UpdateView):
+            model = Post
+            fields = (*Campos de la clase*)
+
+        class PostDeleteViews(DeleteView):
+            model = Post
+
+
+        *my_project.urls
+        from my_app.views import PostListViews, PostDetailViews, PostCreateViews, PostUpdateViews, PostDeleteViews
+
+        urlpatterns = [
+            path('', PostListViews.as_view(), name='list'),
+            path('create/', PostCreateViews.as_view(), name='create'),
+            path('<slug>/', PostDetailViews.as_view(), name='detail'),
+            path('<slug>/update/', PostUpdateViews.as_view(), name='update'),
+            path('<slug>/delete/', PostDeleteViews.as_view(), name='delete'),
+        ]
+
+        *src/templates/*my_app*
+            my_app/new_file_1.html      # Por cada vista
+            my_app/new_file_2.html
+            my_app/new_file_3.html
+            my_app/new_file_4.html
+            my_app/new_file_5.html
+
+        *src/templates/my_app/new_file_1.html => ListView
+            {% extends "base.html" %}
+
+            {% block content %}
+                <div class="container">
+                    {% for object in object_list %}
+                        {{ object.title }}
+                    {% endfor %}
+                </div>
+            {% endblock content %}
+
+        *new_file_2.html => DetailView -> my_app.models, Post -> slug = models.SlugField()
+            {% extends "base.html" %}
+
+            {% block content %}
+                <div class="container">
+                    <h1>Post Detail View</h1>
+                        {{ object.title }}
+                </div>
+            {% endblock content %}
+
+        *new_file_3.html => UpdateView -> my_app.views, Class PostUpdateViews -> fields = (.,.,.,.)
+            *post_form.html => Usar formulario para crear y actualizar
+            {% extends "base.html" %}
+
+                {% block content %}
+                    <div class="container">
+                            <h1>UpdateView</h1>
+                    </div>
+                {% endblock content %}
+
+        *new_file_4.html => DeleteView -> my_app.views, Class PostDeleteViews -> success_url = '/'
+            *post_confirm_delete.html
+            {% extends "base.html" %}
+
+                {% block content %}
+                    <div class="container">
+                        <h1>Seguro de eliminar?</h1>
+                        <form method="POST">
+                            {% csrf_token %}
+                            <button class="btn btn-primary" type="submit">Confirm</button>
+                        </form>
+                    </div>
+                {% endblock content %}
+
+        *new_file_5.html => CreateView -> my_app.views, Class PostCreateView -> fields = (.,.,.,.)
+
+
+
+=> Creando y Actualizando
+    *my_app/forms.py
+    from django import forms
+    from .models import Post
+
+    class PostForm(forms.ModelForm):
+        class Meta:
+            model = Post
+            fields = ('__all__')
+
+    *my_app.views
+    from .forms import PostForm
+
+    PostCreateView && PostUpdateView
+    form_class = PostForm
+
+    *post_form.html
+    <h1>Esta es la vista de {{ view_type }}</h1>
+    <form method="POST" enctype="multipart/form-data">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button class="btn btn-primary" type="submit">{{ view_type|title }}</button>
+    </form>
+
+    *my_app.views
+    class PostUpdateView
+        eliminar *fields*
+        success_url = '/'
+
+        def get_context_data(self, **kwargs):
+            context = super().get_context_data(**kwargs)
+            context.update({
+                'view_type': 'update'
+            })
+            return context
+
+    class PostCreateView
+        eliminar *fields*
+        success_url = '/'
+
+        def get_context_data(self, **kwargs):
+            context = super().get_context_data(**kwargs)
+            context.update({
+                'view_type': 'create'
+            })
+            return context
+
+
+
+=> Estilos con Bootstrap:
+    *post_list.html
+        {% extends "base.html" %}
+
+        {% block content %}
+            <div class="container">
+                {% for object in object_list %}
+                    <div class="card" style="width: 18rem;">
+                        <img src="{{ object.thumbnail.url }}" class="card-img-top" alt="..."/>
+                        <div class="card-body">
+                            <h5 class="card-title">{{ object.title }}</h5>
+                            <p class="card-text">{{ object.content|truncatechars:9 }}</p>
+                            <a href="{{ object.get_absolute_url }}" class="btn btn-primary">Go</a>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endblock content %}
+
+
+    *my_app.models
+    from django.shortcuts import reverse
+    class Post:
+        def get_absolute_url(self):
+            return reverse("detail", kwargs={
+                'slug': self.slug
+            })
+
+    *base.html
+    <a href="{% url 'list' %}">Home</a>

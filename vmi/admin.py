@@ -42,7 +42,7 @@ class MunicipioAdmin(admin.ModelAdmin):
 
 
 class PedidoAdmin(admin.ModelAdmin):
-    list_display = ("idProveedor", "es_reciente")
+    list_display = ("idProveedor", "es_reciente", "valor_pedido")
 
 class InventarioAdmin(admin.ModelAdmin):
     list_display = ("idReferencia", "saldo")

@@ -14,8 +14,8 @@ class Referencia (models.Model):
     idReferencia = models.AutoField(primary_key=True, null=False)
     nombre = models.CharField(max_length=50, null=False, blank=False)
     ean8 = models.CharField(max_length=50, null=False)
-    ean13 = models.CharField(max_length=50, null=False)
-    ean128 = models.CharField(max_length=50, null=False)
+    ean13 = models.CharField(max_length=50)
+    ean128 = models.CharField(max_length=50)
     cantidad = models.IntegerField(null=False, blank=False, default=0)
 
     def __str__(self):
