@@ -30,7 +30,8 @@
 
 
 => Vistas o Views:
-    Se realiza de esta manera pero la mejor organizacion es con clases
+    *Function Base Views*
+    *Se realiza de esta manera pero la mejor organizacion es con clases
     def dumm_view(request):
         now = datetime.datetime.now()
         html = "<html><body>It isn now %s</body></html>" % now
@@ -500,4 +501,30 @@
     *base.html
     <a href="{% url 'list' %}">Home</a>
 
-3:47:00
+=> Estilos: List View:
+    *my_app.models => Metodos para contar los likes y comments
+    class Post
+
+    @property
+    def get_comment_count(self):
+        return self.comment_set.all().count()
+
+    @property
+    def get_like_count(self):
+        return self.like_set.all().count()
+
+    @property
+    def get_view_count(self):
+        return self.view_set.all().count()
+
+
+    *post_list.html
+    <span><i class="fas fa-thumbs-up"></i>{{ object.get_view_count }}</span>
+    <span><i class="fas fa-eye"></i>{{ object.get_like_count }}</span>
+    <span><i class="fas fa-comments"></i>{{ object.get_comment_count }}</span>
+
+    <p class="card-text">Posted {{ object.publish_date|timesince }} ago</p>
+
+
+
+=> Estilos: Detail View:

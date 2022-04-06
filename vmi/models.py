@@ -9,6 +9,14 @@ Modelos con PrimaryKey
 ORM -> Object Relational Maping
 """
 
+# Status Choices:
+STATUS_CHOICES = [
+    ('A', 'Activo'),
+    ('I', 'Inhabilitado'),
+    ('C', 'Cancelado')
+]
+
+
 
 class Referencia (models.Model):
     idReferencia = models.AutoField(primary_key=True, null=False)
@@ -19,23 +27,25 @@ class Referencia (models.Model):
     cantidad = models.IntegerField(null=False, blank=False, default=0)
 
     def __str__(self):
-#        txt = '{0} ({1})'
-        return (self.nombre.capitalize())
+        txt = '{0} ({1})'
+        return txt.format(self.nombre.title(), self.cantidad)
 
 
 
 
 class Proveedor (models.Model):
     idProveedor = models.PositiveIntegerField(primary_key=True, null=False)
-    nombre = models.CharField(max_length=50, null=False)
+    nombre = models.CharField(max_length=200, null=False)
     fecha_creacion = models.DateTimeField(auto_now_add=True, editable=False,)
-#    estado = models.BooleanField(default=False)
+    estado = models.CharField(max_length=1, choices=STATUS_CHOICES)
 
     def __str__(self):
         return self.nombre
 #        txt = '{0} Fecha ({1})'
 #        return txt.format(self.nombre, self.fecha_creacion.strftime('%b/%d/%Y - %H:%M'))
 
+    def estado_proveedor(self):  #<== Metodo para ver si esta disponible el proveedor
+        return self.estado == 'A'
 
 
 
@@ -144,7 +154,7 @@ class Pedido (models.Model):
         return str(self.idProveedor)
 
     def es_reciente(self):
-        return timezone.now() >= self.fecha_pedido>= timezone.now() - datetime.timedelta(days=3)
+        return timezone.now() >= self.fecha_pedido>= timezone.now() - datetime.timedelta(days=15)
 
 
 
@@ -168,6 +178,9 @@ class SaldoHistorico (models.Model):
     fecha_corte = models.DateTimeField(null=False)
 #    estado = models.CharField(max_length=6)
 
+    def __str__(self):
+        return self.id_bodega
+
 
 
 
@@ -177,6 +190,9 @@ class SaldoActual (models.Model):
     cantidad = models.IntegerField(null=False)
     fecha_mov = models.DateTimeField(auto_now_add=True, editable=False)
 #    estado = models.CharField(max_length=6)
+
+    def __str__(self):
+        return self.id_bodega
 
 
 
