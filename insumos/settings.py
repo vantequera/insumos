@@ -25,10 +25,7 @@ SECRET_KEY = 'django-insecure-&fs1%2i7u+vv7&$+^^=q+#8g3n*i9jnnyu1*ro04(!#sw!oi_m
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = [
-    '192.168.88.35',
-    'localhost',
-]
+ALLOWED_HOSTS = []
 
 
 # Application definition
@@ -79,14 +76,14 @@ WSGI_APPLICATION = 'insumos.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'devel',
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'devel.sqlite3',
 #        'NAME': 'pruebas',
-        'USER': 'lesavant',
-        'PASSWORD': '2209',
-        'HOST': 'localhost',
-#        'HOST': '192.168.88.100',
-        'PORT': '5432',
+#         'USER': 'lesavant',
+#         'PASSWORD': '2209',
+#         'HOST': 'localhost',
+# #        'HOST': '192.168.88.100',
+#         'PORT': '5432',
     }
 }
 
