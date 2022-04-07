@@ -22,7 +22,7 @@ from vmi.models import (
     TipoMov,
     TipoUnidad)
 
-
+# ==== Admin Actions Global ================================================================================================
 # Admin actions: <== Aquí es un metodo de cada ModelAdmin
 # @admin.action(permissions=['Status'],description='Cancelar Proveedores')
 # def cancelar_proveedor(modeladmin, request, queryset):
@@ -34,11 +34,12 @@ from vmi.models import (
 #     queryset.update(estado='I')
 
 
+# ==== Disable Global Actions ===============================================================================================
 # Deshabilitar una acción en todo el sitio:
 # admin.site.disable_action('delete_selected')
 
 
-# StackedInline
+# ==== StackedInline ========================================================================================================
 
 class InventarioInLine(admin.StackedInline):
     model = Inventario
@@ -46,7 +47,7 @@ class InventarioInLine(admin.StackedInline):
 
 
 
-# ModelAdmin
+# ==== ModelAdmin ProveedorAdmin ============================================================================================
 
 class ProveedorAdmin(admin.ModelAdmin):
     list_display = ("title_name", "fecha_creacion", "estado")
@@ -100,6 +101,7 @@ class ProveedorAdmin(admin.ModelAdmin):
         return request.user.has_pem('%s.%s' % (opts.app_label, codename))
 
 
+# ==== ModelAdmin Referencia Admin ====================================================================================
 
 class ReferenciaAdmin(admin.ModelAdmin):
     inlines = [InventarioInLine]
@@ -111,6 +113,8 @@ class ReferenciaAdmin(admin.ModelAdmin):
         return ('{0}'.format(obj.nombre.title()))
 
 
+# ==== ModelAdmin Bodega Admin =======================================================================================
+
 class BodegaAdmin(admin.ModelAdmin):
     list_display = ("nombre", "idSede", "idBodega")
 
@@ -118,6 +122,8 @@ class BodegaAdmin(admin.ModelAdmin):
     # def title_name(self, obj):
     #     return ('{0}'.format(obj.nombre.title()))
 
+
+# ==== ModelAdmin Factura Admin =======================================================================================
 
 class FacturaAdmin(admin.ModelAdmin):
     list_display = ("idProveedor", "idFactura", "fechaFactura")
@@ -127,6 +133,8 @@ class FacturaAdmin(admin.ModelAdmin):
     #     return ('{0}'.format(obj.nombre.title()))
 
 
+# ==== ModelAdmin Sede Admin =========================================================================================
+
 class SedeAdmin(admin.ModelAdmin):
     list_display = ("nombre_sede", "idSede", "id_municipio")
 
@@ -134,6 +142,8 @@ class SedeAdmin(admin.ModelAdmin):
     # def title_name(self, obj):
     #     return ('{0}'.format(obj.nombre.title()))
 
+
+# ==== ModelAdmin Facturas Mov Admin =================================================================================
 
 class FacturasMovAdmin(admin.ModelAdmin):
     list_display = ("idfactura", "idReferencia")
@@ -143,6 +153,8 @@ class FacturasMovAdmin(admin.ModelAdmin):
     #     return ('{0}'.format(obj.nombre.title()))
 
 
+# ==== ModelAdmin Pais Admin =========================================================================================
+
 class PaisAdmin(admin.ModelAdmin):
     list_display = ("nombre", "codigo_dane")
 
@@ -150,6 +162,8 @@ class PaisAdmin(admin.ModelAdmin):
     # def title_name(self, obj):
     #     return ('{0}'.format(obj.nombre.title()))
 
+
+# ==== ModelAdmin Departamento Admin =================================================================================
 
 class DepartamentoAdmin(admin.ModelAdmin):
     list_display = ("nombre", "codigo_dane", "id_pais")
@@ -159,6 +173,8 @@ class DepartamentoAdmin(admin.ModelAdmin):
     #     return ('{0}'.format(obj.nombre.title()))
 
 
+# ==== ModelAdmin Municipio Admin =======================================================================================
+
 class MunicipioAdmin(admin.ModelAdmin):
     list_display = ("nombre", "codigo_dane", "id_departamento")
 
@@ -167,12 +183,17 @@ class MunicipioAdmin(admin.ModelAdmin):
     #     return ('{0}'.format(obj.nombre.title()))
 
 
+# ==== ModelAdmin Pedido Admin =========================================================================================
+
 class PedidoAdmin(admin.ModelAdmin):
     list_display = ("idProveedor", "es_reciente", "valor_pedido")
 
 # Modificar texto en el Admin de Django
     # def title_name(self, obj):
     #     return ('{0}'.format(obj.nombre.title()))
+
+
+# ==== ModelAdmin Inventario Admin =======================================================================================
 
 class InventarioAdmin(admin.ModelAdmin):
     list_display = ("idReferencia", "saldo")
@@ -182,7 +203,7 @@ class InventarioAdmin(admin.ModelAdmin):
     #     return ('{0}'.format(obj.nombre.title()))
 
 
-# Register your models here.
+# ==== Register your models here =======================================================================================
 
 admin.site.register(Referencia, ReferenciaAdmin)
 admin.site.register(Proveedor, ProveedorAdmin)
