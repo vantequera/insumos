@@ -28,7 +28,7 @@ DEBUG = True
 ALLOWED_HOSTS = [
     '192.168.88.35',
     'localhost',
-    ]
+]
 
 
 # Application definition
@@ -80,11 +80,12 @@ WSGI_APPLICATION = 'insumos.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'pruebas',
+        'NAME': 'devel',
+#        'NAME': 'pruebas',
         'USER': 'lesavant',
         'PASSWORD': '2209',
-#        'HOST': 'localhost',
-        'HOST': '192.168.88.100',
+        'HOST': 'localhost',
+#        'HOST': '192.168.88.100',
         'PORT': '5432',
     }
 }
