@@ -1,5 +1,6 @@
+import site
 from django.contrib import admin
-from vmi.models import Billing, City, Country, Department, MovementBilling, Periodo, Provider, Reference, TypeUnit
+from vmi.models import Billing, City, Country, Department, MovementBilling, MovementOrder, Order, Periodo, Provider, ProviderOrder, Reference, TypeUnit
 
 
 # ======================== Modificadores de Modelos ========================
@@ -21,3 +22,6 @@ admin.site.register(Reference, ReferenceAdmin)
 admin.site.register(Billing)
 admin.site.register(MovementBilling)
 admin.site.register(Provider)
+admin.site.register(Order)
+admin.site.register(MovementOrder)
+admin.site.register(ProviderOrder)

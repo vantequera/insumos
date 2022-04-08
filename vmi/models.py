@@ -1,4 +1,5 @@
 import datetime, uuid
+from email.policy import default
 from django.db import models
 from django.utils import timezone
 
@@ -131,16 +132,20 @@ class Order(models.Model):
     proveedor_id = models.ForeignKey(Provider, on_delete=models.CASCADE)
     fecha_pedido = models.DateTimeField(auto_now_add=True, editable=False)
     estado_orden = models.CharField(max_length=1, choices=STATUS_CODE)
+    referencia_id = models.ForeignKey(Reference, on_delete=models.CASCADE)
+    tipo_unidad = models.ForeignKey(TypeUnit, models.CASCADE)
 
 
 # ====== Modelo Pedido Movimiento ========================
 class MovementOrder(Order):
-    pass
+    cantidad_compra = models.DecimalField(decimal_places=3, max_digits=6, default=0)
+    valor_pedido = models.DecimalField(decimal_places=2, max_digits=12, default=0)
 
 
 # ====== Modelo Pedido Proveedores ========================
 class ProviderOrder(Order):
-    pass
+    cantidad_compra = models.DecimalField(decimal_places=3, max_digits=6, default=0)
+    valor_orden = models.DecimalField(decimal_places=3, max_digits=6, default=0)
 
 
 # ======================== Modelos de Facturación ========================
