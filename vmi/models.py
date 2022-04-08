@@ -1,6 +1,5 @@
-import datetime
+import datetime, uuid
 from django.db import models
-from django.forms import DateTimeField
 from django.utils import timezone
 
 # Create your models here.
@@ -34,20 +33,63 @@ class City(models.Model):
         return self.nombre_ciudad
 
 
-# ======================== Modelo Tipo de Unidad ========================
+# ======================== Modelos Tipo ========================
 # ====== Tipo de Unidad ========================
 class TypeUnit(models.Model):
     tipo_unidad = models.CharField(max_length=50, primary_key=True)
     estado_unidad = models.CharField(max_length=1)
+#    unidad_maestra = models.
+    formula = models.DecimalField(decimal_places=6, max_digits=12)
 
     def __str__(self):
         return self.tipo_unidad
+
+
+#====== Tipo de Movimiento ========================
+class TypeMov(models.Model):
+    nombre_mov = models.CharField(max_length=20, primary_key=True)
+#    estado = models.CharField()
+
+    def __str__(self):
+        return self.nombre_mov
+
+    # def tipo_de_estado(self):
+    #     if self.estado == True:
+    #         return('Entrada')
+    #     else:
+    #         return('Salida')
+
+
+# ====== Modelo de periodos de facturación ========================
+class Periodo(models.Model):
+    fecha_inicio = models.DateField("Inicio del corte")
+    fecha_fin = models.DateField("Fin del corte")
+    estado = models.BooleanField(default=True, verbose_name='Estado del periodo')
+
+    def __str__(self):
+        inicio = self.fecha_inicio.strftime('%d/%B/%Y')
+        fin = self.fecha_fin.strftime('%d/%B/%Y')
+        txt = '{0} - {1}'.format(inicio, fin)
+        return txt
+
+    def cierre_de_estado(self):
+        fecha_cierre = timezone.now() >= self.fecha_fin>= timezone.now() - datetime.timedelta(days=7)
+        if fecha_cierre:
+            cambio = self.estado = False
+            return cambio
+
+    def estado_del_periodo(self):
+        if self.estado == True:
+            return 'Activo'
+        else:
+            return 'Cerrado'
 
 
 # ======================== Modelo de Referencia ========================
 # ====== Referencia de productos ========================
 class Reference(models.Model):
     nombre_ref = models.CharField(max_length=100)
+    unique_id = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
     codigo_ean8 = models.CharField(max_length=8, null=False)
     codigo_ean13 = models.CharField(max_length=13)
     codigo_ean128 = models.CharField(max_length=50)
@@ -80,7 +122,15 @@ class Provider(models.Model):
 # ======================== Modelos de Pedidos ========================
 # ====== Modelo Pedido General ========================
 class Order(models.Model):
-    pass
+    STATUS_CODE = [
+        ('A', 'Activo'),
+        ('E', 'En Curso'),
+        ('C', 'Cancelado'),
+        ('P', 'Pago')
+    ]
+    proveedor_id = models.ForeignKey(Provider, on_delete=models.CASCADE)
+    fecha_pedido = models.DateTimeField(auto_now_add=True, editable=False)
+    estado_orden = models.CharField(max_length=1, choices=STATUS_CODE)
 
 
 # ====== Modelo Pedido Movimiento ========================
