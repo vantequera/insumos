@@ -1,7 +1,6 @@
 import datetime, uuid
-from http.client import EXPECTATION_FAILED
-from email.policy import default
 from django.db import models
+from django.db.models import F
 from django.utils import timezone
 
 # Create your models here.
@@ -159,14 +158,27 @@ class Pedido(models.Model):
     proveedor_id = models.ForeignKey(to=Proveedor, on_delete=models.CASCADE)
     fecha_pedido = models.DateTimeField(auto_now_add=True, editable=False)
     estado_orden = models.CharField(max_length=1, choices=STATUS_CODE)
-    referencia_id = models.ForeignKey(to=Referencia, on_delete=models.CASCADE)
-    tipo_unidad = models.ForeignKey(to=UnidadTipo, on_delete=models.CASCADE)
+    valor_pedido = models.ForeignKey('MovimientoPedido', models.DO_NOTHING, db_column='valor_pedido', default=0, related_name='+')
+
+    def save(self):
+        movimiento = Pedido.objects.all().get(id=self.id)
+        movimiento.valor_pedido.valor_movimiento = F('valor_movimiento')
+        self.valor_pedido = movimiento.valor_pedido.valor_movimiento
+        super(Pedido, self).save()
 
 
 # ====== Modelo Pedido Movimiento ========================
 class MovimientoPedido(Pedido):
-    cantidad_compra = models.DecimalField(decimal_places=3, max_digits=6, default=0)
-    valor_pedido = models.DecimalField(decimal_places=2, max_digits=12, default=0)
+    referencia_id = models.ManyToManyField(to=Referencia)
+    cantidad_solicitada = models.DecimalField(decimal_places=3, max_digits=6, default=0)
+    tipo_unidad = models.ForeignKey(to=UnidadTipo, on_delete=models.CASCADE, default='A')
+    valor_movimiento = models.DecimalField(decimal_places=2, max_digits=12, default=0)
+
+# ====== Calculo de valor total ==========================
+    def _get_valor_compra(self):
+        return self.cantidad_solicitada*self.valor_movimiento
+
+    valor_compra = property(_get_valor_compra)
 
 
 # ====== Modelo Pedido Proveedores ========================
