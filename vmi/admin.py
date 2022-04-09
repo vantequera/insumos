@@ -1,6 +1,6 @@
 import site
 from django.contrib import admin
-from vmi.models import Billing, City, Country, Department, MovementBilling, MovementOrder, Order, Periodo, Provider, ProviderOrder, Reference, TypeUnit
+from vmi.models import Ciudad, Factura, MovimientoFactura, Pais, Departamento, MovimientoPedido, Pedido, Periodo, Proveedor, ProveedorPedido, Referencia, UnidadTipo
 
 
 # ======================== Modificadores de Modelos ========================
@@ -14,14 +14,14 @@ class ReferenceAdmin(admin.ModelAdmin):
 
 # ======================== Administrador de Modelos ========================
 admin.site.register(Periodo, PeriodoAdmin)
-admin.site.register(Country)
-admin.site.register(Department)
-admin.site.register(City)
-admin.site.register(TypeUnit)
-admin.site.register(Reference, ReferenceAdmin)
-admin.site.register(Billing)
-admin.site.register(MovementBilling)
-admin.site.register(Provider)
-admin.site.register(Order)
-admin.site.register(MovementOrder)
-admin.site.register(ProviderOrder)
+admin.site.register(Pais)
+admin.site.register(Departamento)
+admin.site.register(Ciudad)
+admin.site.register(UnidadTipo)
+admin.site.register(Referencia, ReferenceAdmin)
+admin.site.register(Factura)
+admin.site.register(MovimientoFactura)
+admin.site.register(Proveedor)
+admin.site.register(Pedido)
+admin.site.register(MovimientoPedido)
+admin.site.register(ProveedorPedido)

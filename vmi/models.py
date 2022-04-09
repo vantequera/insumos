@@ -1,4 +1,5 @@
 import datetime, uuid
+from http.client import EXPECTATION_FAILED
 from email.policy import default
 from django.db import models
 from django.utils import timezone
@@ -6,7 +7,7 @@ from django.utils import timezone
 # Create your models here.
 # ======================== Modelos de Región ========================
 # ====== Model Pais ========================
-class Country(models.Model):
+class Pais(models.Model):
     nombre_pais = models.CharField(max_length=200, blank=False, null=False)
     codigo_pais = models.CharField(max_length=20, blank=False, null=False)
 
@@ -15,8 +16,8 @@ class Country(models.Model):
 
 
 # ====== Model Departamento ========================
-class Department(models.Model):
-    pais = models.ForeignKey(Country,on_delete=models.CASCADE ,related_name='Pais')
+class Departamento(models.Model):
+    pais = models.ForeignKey(to=Pais, on_delete=models.CASCADE, related_name='Pais')
     nombre_departamento = models.CharField(max_length=200,blank=False ,null=False)
     codigo_dane_departamento = models.IntegerField(blank=False, null=False)
 
@@ -25,8 +26,8 @@ class Department(models.Model):
 
 
 # ====== Model Ciudad/Municipio ========================
-class City(models.Model):
-    departamento = models.ForeignKey(Department,on_delete=models.CASCADE ,related_name='Departamento')
+class Ciudad(models.Model):
+    departamento = models.ForeignKey(to=Departamento, on_delete=models.CASCADE, related_name='Departamento')
     nombre_ciudad = models.CharField(max_length=200, blank=False, null=False)
     codigo_dane_ciudad = models.IntegerField(blank=False, null=False)
 
@@ -34,9 +35,35 @@ class City(models.Model):
         return self.nombre_ciudad
 
 
+# ======================== Modelos de Sede Bodega ========================
+# ====== Modelo Sede ========================
+class Sede(models.Model):
+    ESTADO = [
+        ('A', 'Activo'),
+        ('F', 'Fuera de Servicio'),
+        ('T', 'Traslado')
+    ]
+    nombre_sede = models.CharField(max_length=50, verbose_name='Nombre de Sede')
+    estado_sede = models.CharField(verbose_name='Estado de la Sede', max_length=1, choices=ESTADO)
+    municipio = models.ForeignKey(to=Ciudad, on_delete=models.CASCADE)
+
+
+# ====== Modelo Bodega ========================
+class Bodega(models.Model):
+    ESTADO = [
+        ('Activo', 'Activo'),
+        ('Inhabilitado', 'Inhabilitado'),
+        ('Atrasado', 'Atrasado')
+    ]
+    nombre = models.CharField(verbose_name='Nombre de Bodega', max_length=50)
+    estado = models.CharField(verbose_name='Esatdo de la Bodega', max_length=20, choices=ESTADO)
+    sede = models.ForeignKey(Sede, on_delete=models.CASCADE)
+    municipio = models.ForeignKey(to=Ciudad, on_delete=models.CASCADE)
+
+
 # ======================== Modelos Tipo ========================
 # ====== Tipo de Unidad ========================
-class TypeUnit(models.Model):
+class UnidadTipo(models.Model):
     tipo_unidad = models.CharField(max_length=50, primary_key=True)
     estado_unidad = models.CharField(max_length=1)
 #    unidad_maestra = models.
@@ -47,7 +74,7 @@ class TypeUnit(models.Model):
 
 
 #====== Tipo de Movimiento ========================
-class TypeMov(models.Model):
+class MovimientoTipo(models.Model):
     nombre_mov = models.CharField(max_length=20, primary_key=True)
 #    estado = models.CharField()
 
@@ -88,13 +115,13 @@ class Periodo(models.Model):
 
 # ======================== Modelo de Referencia ========================
 # ====== Referencia de productos ========================
-class Reference(models.Model):
+class Referencia(models.Model):
     nombre_ref = models.CharField(max_length=100)
     unique_id = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
     codigo_ean8 = models.CharField(max_length=8, null=False)
     codigo_ean13 = models.CharField(max_length=13)
     codigo_ean128 = models.CharField(max_length=50)
-    tipo_unida = models.ForeignKey(TypeUnit, on_delete=models.PROTECT)
+    tipo_unida = models.ForeignKey(to=UnidadTipo, on_delete=models.PROTECT)
 
     def __str__(self):
         return self.nombre_ref
@@ -102,7 +129,7 @@ class Reference(models.Model):
 
 # ======================== Modelo de Proveedor ========================
 # ====== Proveedor ========================
-class Provider(models.Model):
+class Proveedor(models.Model):
     STATUS_CODE = [
         ('A', 'Activo'),
         ('I', 'Inhabilitado'),
@@ -113,7 +140,7 @@ class Provider(models.Model):
     numero_tel_1= models.CharField(max_length=7)
     numero_tel_cel = models.CharField(max_length=10)
     correo = models.EmailField(verbose_name='Email', unique=True)
-    ciudad = models.ForeignKey(City, on_delete=models.CASCADE)
+    ciudad = models.ForeignKey(Ciudad, on_delete=models.CASCADE)
     estado_proveedor = models.CharField(max_length=1, choices=STATUS_CODE)
 
     def __str__(self):
@@ -122,36 +149,36 @@ class Provider(models.Model):
 
 # ======================== Modelos de Pedidos ========================
 # ====== Modelo Pedido General ========================
-class Order(models.Model):
+class Pedido(models.Model):
     STATUS_CODE = [
         ('A', 'Activo'),
         ('E', 'En Curso'),
         ('C', 'Cancelado'),
         ('P', 'Pago')
     ]
-    proveedor_id = models.ForeignKey(Provider, on_delete=models.CASCADE)
+    proveedor_id = models.ForeignKey(to=Proveedor, on_delete=models.CASCADE)
     fecha_pedido = models.DateTimeField(auto_now_add=True, editable=False)
     estado_orden = models.CharField(max_length=1, choices=STATUS_CODE)
-    referencia_id = models.ForeignKey(Reference, on_delete=models.CASCADE)
-    tipo_unidad = models.ForeignKey(TypeUnit, models.CASCADE)
+    referencia_id = models.ForeignKey(to=Referencia, on_delete=models.CASCADE)
+    tipo_unidad = models.ForeignKey(to=UnidadTipo, on_delete=models.CASCADE)
 
 
 # ====== Modelo Pedido Movimiento ========================
-class MovementOrder(Order):
+class MovimientoPedido(Pedido):
     cantidad_compra = models.DecimalField(decimal_places=3, max_digits=6, default=0)
     valor_pedido = models.DecimalField(decimal_places=2, max_digits=12, default=0)
 
 
 # ====== Modelo Pedido Proveedores ========================
-class ProviderOrder(Order):
+class ProveedorPedido(Pedido):
     cantidad_compra = models.DecimalField(decimal_places=3, max_digits=6, default=0)
     valor_orden = models.DecimalField(decimal_places=3, max_digits=6, default=0)
 
 
 # ======================== Modelos de Facturación ========================
 # ====== Modelo Factura General ========================
-class Billing(models.Model):
-    proveedor_id = models.ForeignKey(Provider, on_delete=models.CASCADE)
+class Factura(models.Model):
+    proveedor_id = models.ForeignKey(to=Proveedor, on_delete=models.CASCADE)
     fecha_creacion = models.DateTimeField(auto_now_add=True, editable=False,)
     fecha_facturacion = models.DateTimeField()
     concepto = models.CharField(max_length=100)
@@ -161,7 +188,26 @@ class Billing(models.Model):
 
 
 # ====== Modelo Factura de Movimiento ========================
-class MovementBilling(Billing):
-    referencia_id = models.ManyToManyField(Reference)
+class MovimientoFactura(Factura):
+    referencia_id = models.ManyToManyField(Referencia)
     cantidad_compra = models.DecimalField(max_digits=12, decimal_places=3)
-    unidad_compra = models.ForeignKey(TypeUnit, on_delete=models.CASCADE)
+    unidad_compra = models.ForeignKey(to=UnidadTipo, on_delete=models.CASCADE)
+
+
+# ======================== Modelos de Inventario ========================
+# ====== Modelo Inventario Base ========================
+class Inventario(models.Model):
+    periodo = models.ForeignKey(Periodo, on_delete=models.CASCADE)
+    bodega = models.ForeignKey(Bodega, on_delete=models.CASCADE)
+    saldo_inicial = models.DecimalField(decimal_places=3, max_digits=12)
+    entrada_inventario = models.DecimalField(decimal_places=3, max_digits=12)
+    salidad_inventario = models.DecimalField(decimal_places=3, max_digits=12)
+    saldo_final = models.DecimalField(decimal_places=3, max_digits=12)
+    tipo_unidad = models.ForeignKey(to=UnidadTipo, on_delete=models.CASCADE)
+
+    def __str__(self):
+        txt = '{0}'
+        return txt.format()
+
+
+# ====== Modelo Invetario Movimiento ========================
