@@ -1,4 +1,5 @@
 import datetime, uuid
+from tabnanny import verbose
 from django.db import models
 from django.db.models import F
 from django.utils import timezone
@@ -13,6 +14,13 @@ class Pais(models.Model):
     def __str__(self):
         return self.nombre_pais
 
+    def save(self):
+        self.nombre_pais = self.nombre_pais.title()
+        super(Pais, self).save()
+
+    class Meta:
+        verbose_name_plural = 'Paises'
+
 
 # ====== Model Departamento ========================
 class Departamento(models.Model):
@@ -23,6 +31,13 @@ class Departamento(models.Model):
     def __str__(self):
         return self.nombre_departamento
 
+    def save(self):
+        self.nombre_departamento = self.nombre_departamento.title()
+        super(Departamento, self).save()
+
+    # class Meta:
+    #     verbose_name_plural = 'Departamentos'
+
 
 # ====== Model Ciudad/Municipio ========================
 class Ciudad(models.Model):
@@ -32,6 +47,13 @@ class Ciudad(models.Model):
 
     def __str__(self):
         return self.nombre_ciudad
+
+    def save(self):
+        self.nombre_ciudad = self.nombre_ciudad.title()
+        super(Ciudad, self).save()
+
+    class Meta:
+        verbose_name_plural = 'Ciudades'
 
 
 # ======================== Modelos de Sede Bodega ========================
@@ -46,6 +68,10 @@ class Sede(models.Model):
     estado_sede = models.CharField(verbose_name='Estado de la Sede', max_length=1, choices=ESTADO)
     municipio = models.ForeignKey(to=Ciudad, on_delete=models.CASCADE)
 
+    def save(self):
+        self.nombre_sede = self.nombre_sede.title()
+        super(Sede, self).save()
+
 
 # ====== Modelo Bodega ========================
 class Bodega(models.Model):
@@ -57,7 +83,7 @@ class Bodega(models.Model):
     nombre = models.CharField(verbose_name='Nombre de Bodega', max_length=50)
     estado = models.CharField(verbose_name='Esatdo de la Bodega', max_length=20, choices=ESTADO)
     sede = models.ForeignKey(Sede, on_delete=models.CASCADE)
-    municipio = models.ForeignKey(to=Ciudad, on_delete=models.CASCADE)
+    municipio = models.ForeignKey(Ciudad, on_delete=models.CASCADE)
 
 
 # ======================== Modelos Tipo ========================
@@ -145,6 +171,13 @@ class Proveedor(models.Model):
     def __str__(self):
         return self.nombre_proveedor
 
+    def save(self):
+        self.nombre_proveedor = self.nombre_proveedor.title()
+        super(Proveedor, self).save()
+
+    class Meta:
+        verbose_name_plural = 'Proveedores'
+
 
 # ======================== Modelos de Pedidos ========================
 # ====== Modelo Pedido General ========================
@@ -160,11 +193,11 @@ class Pedido(models.Model):
     estado_orden = models.CharField(max_length=1, choices=STATUS_CODE)
     valor_pedido = models.ForeignKey('MovimientoPedido', models.DO_NOTHING, db_column='valor_pedido', default=0, related_name='+')
 
-    def save(self):
-        movimiento = Pedido.objects.all().get(id=self.id)
-        movimiento.valor_pedido.valor_movimiento = F('valor_movimiento')
-        self.valor_pedido = movimiento.valor_pedido.valor_movimiento
-        super(Pedido, self).save()
+    # def save(self):
+    #     movimiento = Pedido.objects.all().get(id=self.id)
+    #     movimiento.valor_pedido.valor_movimiento = F('valor_movimiento')
+    #     self.valor_pedido = movimiento.valor_pedido.valor_movimiento
+    #     super(Pedido, self).save()
 
 
 # ====== Modelo Pedido Movimiento ========================
