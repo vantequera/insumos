@@ -15,8 +15,11 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
-from .views import ReferenciaView
-
+from .views import ReferenciaNueva, ReferenciaActualizar, refInactivar
+# ======================== URL Patterns de udemy ========================
 # urlpatterns = [
-#     path('referencia/',ReferenciaView.as_view(), name='referencia_list')
+#     path('referencia/', ReferenciaNueva.as_view(), name='referencia_list'),
+#     path('referencia/new', ReferenciaNueva.as_view(), name='referencia_new'),
+#     path('referencia/<int:pk>', ReferenciaActualizar.as_view(), name='referencia_edit'),
+#     path('referencia/estado/<int:pk>', refInactivar, name='inactivar_ref')
 # ]

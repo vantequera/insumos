@@ -1,10 +1,28 @@
 import datetime, uuid
-from tabnanny import verbose
+
 from django.db import models
-from django.db.models import F
+
 from django.utils import timezone
+# from django_userforeignkey.models.fields import UserForeignKey
+
 
 # Create your models here.
+# ======================== Modelo de usuarios ========================
+# ====== Usuario Modelo Abstracto ========================
+class UsuarioModelo(models.Model):
+    fecha_crea = models.DateTimeField(auto_now_add=True)
+    fecha_modifica = models.DateTimeField(auto_now=True)
+    # usuario_crea = UserForeignKey(auto_user_add=True, related_name='+') # <== Anula el mapeo en reversa con el '+'
+    # usuario_modifica = UserForeignKey(auto_user=True, related_name='+')
+
+    class Meta:
+        abstract = True
+
+
+# ====== Usuario Modelo Principal ========================
+
+
+
 # ======================== Modelos de Región ========================
 # ====== Model Pais ========================
 class Pais(models.Model):
@@ -26,7 +44,7 @@ class Pais(models.Model):
 class Departamento(models.Model):
     pais = models.ForeignKey(to=Pais, on_delete=models.CASCADE, related_name='Pais')
     nombre_departamento = models.CharField(max_length=200,blank=False ,null=False)
-    codigo_dane_departamento = models.IntegerField(blank=False, null=False)
+    codigo_dane_departamento = models.CharField(max_length=2, blank=False, null=False)
 
     def __str__(self):
         return self.nombre_departamento
@@ -43,7 +61,7 @@ class Departamento(models.Model):
 class Ciudad(models.Model):
     departamento = models.ForeignKey(to=Departamento, on_delete=models.CASCADE, related_name='Departamento')
     nombre_ciudad = models.CharField(max_length=200, blank=False, null=False)
-    codigo_dane_ciudad = models.IntegerField(blank=False, null=False)
+    codigo_dane_ciudad = models.CharField(max_length=3, blank=False, null=False)
 
     def __str__(self):
         return self.nombre_ciudad
@@ -65,8 +83,11 @@ class Sede(models.Model):
         ('T', 'Traslado')
     ]
     nombre_sede = models.CharField(max_length=50, verbose_name='Nombre de Sede')
-    estado_sede = models.CharField(verbose_name='Estado de la Sede', max_length=1, choices=ESTADO)
+    estado_sede = models.CharField(verbose_name='Estado de la Sede', max_length=1, choices=ESTADO, default='A')
     municipio = models.ForeignKey(to=Ciudad, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return self.nombre_sede
 
     def save(self):
         self.nombre_sede = self.nombre_sede.title()
@@ -81,9 +102,12 @@ class Bodega(models.Model):
         ('Atrasado', 'Atrasado')
     ]
     nombre = models.CharField(verbose_name='Nombre de Bodega', max_length=50)
-    estado = models.CharField(verbose_name='Esatdo de la Bodega', max_length=20, choices=ESTADO)
+    estado = models.CharField(verbose_name='Estado de la Bodega', max_length=20, choices=ESTADO, default='A')
     sede = models.ForeignKey(Sede, on_delete=models.CASCADE)
     municipio = models.ForeignKey(Ciudad, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return self.nombre
 
 
 # ======================== Modelos Tipo ========================
@@ -125,11 +149,11 @@ class Periodo(models.Model):
         txt = '{0} - {1}'.format(inicio, fin)
         return txt
 
-    def cierre_de_estado(self):
-        fecha_cierre = timezone.now() >= self.fecha_fin>= timezone.now() - datetime.timedelta(days=7)
-        if fecha_cierre:
-            cambio = self.estado = False
-            return cambio
+    # def cierre_de_estado(self):
+    #     fecha_cierre = timezone.now() >= self.fecha_fin>= timezone.now() - datetime.timedelta(days=7)
+    #     if fecha_cierre:
+    #         cambio = self.estado = False
+    #         return cambio
 
     def estado_del_periodo(self):
         if self.estado == True:
@@ -190,7 +214,7 @@ class Pedido(models.Model):
     ]
     proveedor_id = models.ForeignKey(to=Proveedor, on_delete=models.CASCADE)
     fecha_pedido = models.DateTimeField(auto_now_add=True, editable=False)
-    estado_orden = models.CharField(max_length=1, choices=STATUS_CODE)
+    estado_orden = models.CharField(max_length=1, choices=STATUS_CODE, default='A')
     valor_pedido = models.ForeignKey('MovimientoPedido', models.DO_NOTHING, db_column='valor_pedido', default=0, related_name='+')
 
     # def save(self):
@@ -256,3 +280,45 @@ class Inventario(models.Model):
 
 
 # ====== Modelo Invetario Movimiento ========================
+
+
+# ======================== Facturación ========================
+class FacturaEnc(UsuarioModelo):
+    cliente = models.ForeignKey(Proveedor, on_delete=models.CASCADE)
+    fecha = models.DateTimeField(auto_now_add=True)
+    sub_total = models.FloatField(default=0)
+    descuento = models.FloatField(default=0)
+    total = models.FloatField(default=0)
+
+    def __str__(self):
+        return '{0}'.format(self.id)
+
+    def save(self):
+        self.total = self.sub_total - self.descuento
+        super(FacturaEnc, self).save()
+
+    class Meta:
+        verbose_name_plural = 'Encabezados de Facturas'
+        verbose_name = 'Encabezado de Factura'
+
+
+class FacturaDet(UsuarioModelo):
+    factura = models.ForeignKey(FacturaEnc, on_delete=models.CASCADE)
+    producto = models.ForeignKey(Referencia, on_delete=models.CASCADE)
+    cantidad = models.BigIntegerField(default=0)
+    precio = models.FloatField(default=0)
+    sub_total = models.FloatField(default=0)
+    descuento = models.FloatField(default=0)
+    total = models.FloatField(default=0)
+
+    def __str__(self):
+        return '{0}'.format(self.producto)
+
+    def save(self):
+        self.sub_total = float(float(int(self.cantidad)) * float(self.precio))
+        self.total = self.sub_total - float(self.descuento)
+        super(FacturaDet, self).save()
+
+    class Meta:
+        verbose_name_plural = 'Detalles de Facturas'
+        verbose_name = 'Detalle de Factura'
