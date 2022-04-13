@@ -5,6 +5,11 @@ from django.db import models
 from django.utils import timezone
 # from django_userforeignkey.models.fields import UserForeignKey
 
+# Signals
+from django.db.models.signals import post_save, post_delete
+from django.dispatch import receiver
+from django.db.models import Sum
+
 
 # Create your models here.
 # ======================== Modelo de usuarios ========================
@@ -20,7 +25,8 @@ class UsuarioModelo(models.Model):
 
 
 # ====== Usuario Modelo Principal ========================
-
+class Usuario():
+    pass
 
 
 # ======================== Modelos de Región ========================
@@ -124,17 +130,21 @@ class UnidadTipo(models.Model):
 
 #====== Tipo de Movimiento ========================
 class MovimientoTipo(models.Model):
-    nombre_mov = models.CharField(max_length=20, primary_key=True)
-#    estado = models.CharField()
+    MOVES = [
+        ('Entrada_Bodega', 'Entrada de Bodega'),
+        ('Salida_Bodega', 'Salida de Bodega')
+    ]
+    nombre_mov = models.CharField(max_length=30, primary_key=True)
+    estado = models.CharField(max_length=14, choices=MOVES, default='Entrada de Bodega')
 
     def __str__(self):
         return self.nombre_mov
 
-    # def tipo_de_estado(self):
-    #     if self.estado == True:
-    #         return('Entrada')
-    #     else:
-    #         return('Salida')
+    def tipo_de_estado(self):
+        if self.estado == 'Entrada_Bodega':
+            return('Entrada')
+        else:
+            return('Salida')
 
 
 # ====== Modelo de periodos de facturación ========================
@@ -283,6 +293,7 @@ class Inventario(models.Model):
 
 
 # ======================== Facturación ========================
+# ====== Facturación Encabezado ========================
 class FacturaEnc(UsuarioModelo):
     cliente = models.ForeignKey(Proveedor, on_delete=models.CASCADE)
     fecha = models.DateTimeField(auto_now_add=True)
@@ -300,8 +311,12 @@ class FacturaEnc(UsuarioModelo):
     class Meta:
         verbose_name_plural = 'Encabezados de Facturas'
         verbose_name = 'Encabezado de Factura'
+        permissions = [
+            ('sup_caja_fac', 'Permisos de CRUD para crear y editar facturas')
+        ]
 
 
+# ====== Facturación Detalles ========================
 class FacturaDet(UsuarioModelo):
     factura = models.ForeignKey(FacturaEnc, on_delete=models.CASCADE)
     producto = models.ForeignKey(Referencia, on_delete=models.CASCADE)
@@ -322,3 +337,35 @@ class FacturaDet(UsuarioModelo):
     class Meta:
         verbose_name_plural = 'Detalles de Facturas'
         verbose_name = 'Detalle de Factura'
+        permissions = [
+            ('sup_caja_fac', 'Permisos de CRUD para crear y editar facturas')
+        ]
+
+
+# ======================== Signals del área de facturación ========================
+@receiver(post_save, sender=FacturaDet)
+def detalle_fac_guardar(sender, instance, **kwargs):
+    factura_id = instance.factura.id
+    referencia_id = instance.referencia.id
+
+    enc = FacturaEnc.objects.get(pk=factura_id)
+    if enc:
+        sub_total = FacturaDet.objects \
+            .filter(factura=factura_id) \
+            .aggregate(sub_total=Sum('sub_total')) \
+            .get('sub_total', 0.00)
+
+        descuento = FacturaDet.objects \
+            .filter(factura=factura_id) \
+            .aggregate(descuento=Sum('descuento')) \
+            .get('descuento', 0.00)
+
+        enc.sub_total = sub_total
+        enc.descuento = descuento
+        enc.save()
+
+    prod = Referencia.objects.get(pk=referencia_id)
+    if prod:
+        cantidad = int(prod.existencia) - int(instance.cantidad)
+        prod.existencia = cantidad
+        prod.save()

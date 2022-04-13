@@ -5,7 +5,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
 
-from .serializers import ProductoSerializer
+from api.serializers import ProductoSerializer
 from vmi.models import Referencia
 
 # Create your views here.
@@ -20,7 +20,7 @@ class ProductoList(APIView):
 
 class ProductoDetalle(APIView):
 
-    def get(self, request, id):
-        prod = get_object_or_404(Referencia, Q(id=id)) #<== Busquedas complejas funcionan como AND y OR
+    def get(self, request, unique_id):
+        prod = get_object_or_404(Referencia, unique_id=unique_id) #<== Busquedas complejas funcionan como AND y OR
         data = ProductoSerializer(prod).data
         return Response(data)
