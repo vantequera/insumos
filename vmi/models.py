@@ -350,14 +350,14 @@ def detalle_fac_guardar(sender, instance, **kwargs):
 
     enc = FacturaEnc.objects.get(pk=factura_id)
     if enc:
-        sub_total = FacturaDet.objects \
-            .filter(factura=factura_id) \
-            .aggregate(sub_total=Sum('sub_total')) \
+        sub_total = FacturaDet.objects\
+            .filter(factura=factura_id)\
+            .aggregate(sub_total=Sum('sub_total'))\
             .get('sub_total', 0.00)
 
-        descuento = FacturaDet.objects \
-            .filter(factura=factura_id) \
-            .aggregate(descuento=Sum('descuento')) \
+        descuento = FacturaDet.objects\
+            .filter(factura=factura_id)\
+            .aggregate(descuento=Sum('descuento'))\
             .get('descuento', 0.00)
 
         enc.sub_total = sub_total
