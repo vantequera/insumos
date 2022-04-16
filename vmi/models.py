@@ -1,4 +1,5 @@
 import datetime, uuid
+from logging import raiseExceptions
 
 from django.db import models
 
@@ -36,10 +37,10 @@ class Pais(models.Model):
     codigo_pais = models.CharField(max_length=20, blank=False, null=False, unique=True)
 
     def __str__(self):
-        return self.nombre_pais
+        return self.nombre_pais.title()
 
     def save(self):
-        self.nombre_pais = self.nombre_pais.title()
+        self.nombre_pais = self.nombre_pais.upper()
         super(Pais, self).save()
 
     class Meta:
@@ -53,10 +54,10 @@ class Departamento(models.Model):
     codigo_dane_departamento = models.CharField(max_length=2, unique=True)
 
     def __str__(self):
-        return self.nombre_departamento
+        return self.nombre_departamento.title()
 
     def save(self):
-        self.nombre_departamento = self.nombre_departamento.title()
+        self.nombre_departamento = self.nombre_departamento.upper()
         super(Departamento, self).save()
 
     # class Meta:
@@ -70,10 +71,10 @@ class Ciudad(models.Model):
     codigo_dane_ciudad = models.CharField(max_length=3, unique=True)
 
     def __str__(self):
-        return self.nombre_ciudad
+        return self.nombre_ciudad.title()
 
     def save(self):
-        self.nombre_ciudad = self.nombre_ciudad.title()
+        self.nombre_ciudad = self.nombre_ciudad.upper()
         super(Ciudad, self).save()
 
     class Meta:
@@ -93,10 +94,10 @@ class Sede(models.Model):
     municipio = models.ForeignKey(to=Ciudad, on_delete=models.CASCADE)
 
     def __str__(self):
-        return self.nombre_sede
+        return self.nombre_sede.title()
 
     def save(self):
-        self.nombre_sede = self.nombre_sede.title()
+        self.nombre_sede = self.nombre_sede.upper()
         super(Sede, self).save()
 
 
@@ -113,19 +114,30 @@ class Bodega(models.Model):
     municipio = models.ForeignKey(Ciudad, on_delete=models.CASCADE)
 
     def __str__(self):
-        return self.nombre
+        return self.nombre.title()
 
+    def save(self):
+        self.nombre = self.nombre.upper()
+        super(Bodega, self).save()
 
 # ======================== Modelos Tipo ========================
 # ====== Tipo de Unidad ========================
 class UnidadTipo(models.Model):
+    ESTADO = [
+        ('A', 'Activo'),
+        ('I', 'Inactivo')
+    ]
     tipo_unidad = models.CharField(max_length=50, primary_key=True)
-    estado_unidad = models.CharField(max_length=1)
+    estado_unidad = models.CharField(max_length=1, choices=ESTADO)
 #    unidad_maestra = models.
     formula = models.DecimalField(decimal_places=6, max_digits=12)
 
+    def save(self):
+        self.tipo_unidad = self.tipo_unidad.upper()
+        super(UnidadTipo, self).save()
+
     def __str__(self):
-        return self.tipo_unidad
+        return self.tipo_unidad.title()
 
 
 #====== Tipo de Movimiento ========================
@@ -137,14 +149,18 @@ class MovimientoTipo(models.Model):
     nombre_mov = models.CharField(max_length=30, primary_key=True)
     estado = models.CharField(max_length=14, choices=MOVES, default='Entrada_Bodega')
 
+    def save(self):
+        self.nombre_mov = self.nombre_mov.upper()
+        super(MovimientoTipo, self).save()
+
     def __str__(self):
-        return self.nombre_mov
+        return self.nombre_mov.title()
 
     def tipo_de_estado(self):
         if self.estado == 'Entrada_Bodega':
-            return('Entrada')
+            return('🟢')
         else:
-            return('Salida')
+            return('🔴')
 
 
 # ====== Modelo de periodos de facturación ========================
@@ -183,7 +199,11 @@ class Referencia(models.Model):
     tipo_unida = models.ForeignKey(to=UnidadTipo, on_delete=models.PROTECT)
 
     def __str__(self):
-        return self.nombre_ref
+        return self.nombre_ref.title()
+
+    def save(self):
+        self.nombre_ref = self.nombre_ref.upper()
+        super(Referencia, self).save()
 
 
 # ======================== Modelo de Proveedor ========================
@@ -236,7 +256,7 @@ class Pedido(models.Model):
 
 # ====== Modelo Pedido Movimiento ========================
 class MovimientoPedido(Pedido):
-    referencia_id = models.ManyToManyField(to=Referencia)
+    referencia_id = models.ManyToManyField(Referencia)
     cantidad_solicitada = models.DecimalField(decimal_places=3, max_digits=6, default=0)
     tipo_unidad = models.ForeignKey(to=UnidadTipo, on_delete=models.CASCADE, default='A')
     valor_movimiento = models.DecimalField(decimal_places=2, max_digits=12, default=0)
@@ -284,9 +304,13 @@ class Inventario(models.Model):
     saldo_final = models.DecimalField(decimal_places=3, max_digits=12)
     tipo_unidad = models.ForeignKey(to=UnidadTipo, on_delete=models.CASCADE)
 
+    def save(self):
+        if self.periodo.estado == True:
+            super(Inventario, self).save()
+
     def __str__(self):
         txt = '{0}'
-        return txt.format()
+        return txt.format(self.bodega)
 
 
 # ====== Modelo Invetario Movimiento ========================
@@ -319,7 +343,7 @@ class FacturaEnc(UsuarioModelo):
 # ====== Facturación Detalles ========================
 class FacturaDet(UsuarioModelo):
     factura = models.ForeignKey(FacturaEnc, on_delete=models.CASCADE)
-    producto = models.ForeignKey(Referencia, on_delete=models.CASCADE)
+    producto = models.ForeignKey(Referencia, on_delete=models.CASCADE, to_field='codigo_ean8')
     cantidad = models.BigIntegerField(default=0)
     precio = models.FloatField(default=0)
     sub_total = models.FloatField(default=0)
@@ -337,16 +361,16 @@ class FacturaDet(UsuarioModelo):
     class Meta:
         verbose_name_plural = 'Detalles de Facturas'
         verbose_name = 'Detalle de Factura'
-        permissions = [
-            ('sup_caja_fac', 'Permisos de CRUD para crear y editar facturas')
-        ]
+        # permissions = [
+        #     ('sup_caja_fac', 'Permisos de CRUD para crear y editar facturas')
+        # ]
 
 
-# ======================== Signals del área de facturación ========================
+# === Signals del área de facturación ========================
 @receiver(post_save, sender=FacturaDet)
 def detalle_fac_guardar(sender, instance, **kwargs):
     factura_id = instance.factura.id
-    referencia_id = instance.referencia.id
+    referencia_id = instance.producto.id
 
     enc = FacturaEnc.objects.get(pk=factura_id)
     if enc:
@@ -365,7 +389,22 @@ def detalle_fac_guardar(sender, instance, **kwargs):
         enc.save()
 
     prod = Referencia.objects.get(pk=referencia_id)
-    if prod:
-        cantidad = int(prod.existencia) - int(instance.cantidad)
-        prod.existencia = cantidad
-        prod.save()
+    # if prod:
+    #     cantidad = int(prod.existencia) - int(instance.cantidad)
+    #     prod.existencia = cantidad
+    #     prod.save()
+
+
+# === Signals de Periodo model ========================
+def cerrar_periodo(sender, instance, **kwargs):
+    periodo = instance.id
+    inventario = Inventario.objects.filter(periodo=periodo)
+    print(inventario)
+
+post_save.connect(cerrar_periodo, sender=Periodo)
+
+# def cierre_de_estado(self):
+#     fecha_cierre = timezone.now() >= self.fecha_fin>= timezone.now() - datetime.timedelta(days=7)
+#     if fecha_cierre:
+#         cambio = self.estado = False
+#         return cambio

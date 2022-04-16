@@ -1,6 +1,6 @@
 import site
 from django.contrib import admin
-from vmi.models import Bodega, Ciudad, Factura, FacturaDet, FacturaEnc, MovimientoFactura, MovimientoTipo, Pais, Departamento, MovimientoPedido, Pedido, Periodo, Proveedor, ProveedorPedido, Referencia, Sede, UnidadTipo
+from vmi.models import Bodega, Ciudad, Factura, FacturaDet, FacturaEnc, Inventario, MovimientoFactura, MovimientoTipo, Pais, Departamento, MovimientoPedido, Pedido, Periodo, Proveedor, ProveedorPedido, Referencia, Sede, UnidadTipo
 
 
 # ======================== Modificadores de Modelos ========================
@@ -32,6 +32,11 @@ class FacturaAdmin(admin.ModelAdmin):
 class Factura2Admin(admin.ModelAdmin):
     pass
 
+
+class MovimientoTipoAdmin(admin.ModelAdmin):
+    list_display = ('__str__', 'tipo_de_estado')
+
+
 # ======================== Administrador de Modelos ========================
 admin.site.register(Periodo, PeriodoAdmin)
 admin.site.register(Pais, PaisAdmin)
@@ -43,10 +48,11 @@ admin.site.register(Factura)
 admin.site.register(MovimientoFactura)
 admin.site.register(Proveedor)
 admin.site.register(Pedido)
-admin.site.register(MovimientoTipo)
+admin.site.register(MovimientoTipo, MovimientoTipoAdmin)
 admin.site.register(MovimientoPedido)
 admin.site.register(ProveedorPedido)
 admin.site.register(FacturaEnc, FacturaAdmin)
 admin.site.register(FacturaDet, Factura2Admin)
 admin.site.register(Bodega)
 admin.site.register(Sede)
+admin.site.register(Inventario)
