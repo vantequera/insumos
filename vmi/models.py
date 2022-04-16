@@ -33,7 +33,7 @@ class Usuario():
 # ====== Model Pais ========================
 class Pais(models.Model):
     nombre_pais = models.CharField(max_length=200, blank=False, null=False)
-    codigo_pais = models.CharField(max_length=20, blank=False, null=False)
+    codigo_pais = models.CharField(max_length=20, blank=False, null=False, unique=True)
 
     def __str__(self):
         return self.nombre_pais
@@ -50,7 +50,7 @@ class Pais(models.Model):
 class Departamento(models.Model):
     pais = models.ForeignKey(to=Pais, on_delete=models.CASCADE, related_name='Pais')
     nombre_departamento = models.CharField(max_length=200,blank=False ,null=False)
-    codigo_dane_departamento = models.CharField(max_length=2, blank=False, null=False)
+    codigo_dane_departamento = models.CharField(max_length=2, unique=True)
 
     def __str__(self):
         return self.nombre_departamento
@@ -67,7 +67,7 @@ class Departamento(models.Model):
 class Ciudad(models.Model):
     departamento = models.ForeignKey(to=Departamento, on_delete=models.CASCADE, related_name='Departamento')
     nombre_ciudad = models.CharField(max_length=200, blank=False, null=False)
-    codigo_dane_ciudad = models.CharField(max_length=3, blank=False, null=False)
+    codigo_dane_ciudad = models.CharField(max_length=3, unique=True)
 
     def __str__(self):
         return self.nombre_ciudad
@@ -135,7 +135,7 @@ class MovimientoTipo(models.Model):
         ('Salida_Bodega', 'Salida de Bodega')
     ]
     nombre_mov = models.CharField(max_length=30, primary_key=True)
-    estado = models.CharField(max_length=14, choices=MOVES, default='Entrada de Bodega')
+    estado = models.CharField(max_length=14, choices=MOVES, default='Entrada_Bodega')
 
     def __str__(self):
         return self.nombre_mov
@@ -177,7 +177,7 @@ class Periodo(models.Model):
 class Referencia(models.Model):
     nombre_ref = models.CharField(max_length=100)
     unique_id = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
-    codigo_ean8 = models.CharField(max_length=8, null=False)
+    codigo_ean8 = models.CharField(max_length=8, unique=True)
     codigo_ean13 = models.CharField(max_length=13)
     codigo_ean128 = models.CharField(max_length=50)
     tipo_unida = models.ForeignKey(to=UnidadTipo, on_delete=models.PROTECT)
@@ -195,7 +195,7 @@ class Proveedor(models.Model):
         ('C', 'Cancelado')
     ]
     nombre_proveedor = models.CharField(max_length=200, blank=False, null=False)
-    nit = models.CharField(max_length=15)
+    nit = models.CharField(max_length=15, unique=True)
     numero_tel_1= models.CharField(max_length=7)
     numero_tel_cel = models.CharField(max_length=10)
     correo = models.EmailField(verbose_name='Email', unique=True)

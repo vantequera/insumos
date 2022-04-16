@@ -3,8 +3,6 @@ from django import forms
 from vmi.models import Referencia
 
 
-
-
 class ReferenciaForm(forms.ModelForm):
     email = forms.EmailField(max_length=50)
 
@@ -17,7 +15,7 @@ class ReferenciaForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         for field in iter(self.fields):
-            # Agregando un atributo item por item creado en su clase
+            # Agregando un atributo item por item creado en su clase 'Atributos de HTML'
             self.fields[field].widget.attrs.update({
                 'class': 'form_control'
             })
