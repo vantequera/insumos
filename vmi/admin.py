@@ -30,7 +30,7 @@ class FacturaAdmin(admin.ModelAdmin):
 
 
 class Factura2Admin(admin.ModelAdmin):
-    pass
+    list_display = ('__str__', 'cantidad', 'precio', 'sub_total', 'total')
 
 
 class MovimientoTipoAdmin(admin.ModelAdmin):
@@ -55,4 +55,7 @@ admin.site.register(FacturaEnc, FacturaAdmin)
 admin.site.register(FacturaDet, Factura2Admin)
 admin.site.register(Bodega)
 admin.site.register(Sede)
-admin.site.register(Inventario)
+
+@admin.register(Inventario)
+class InventarioAdmin(admin.ModelAdmin):
+    list_display = ('__str__', 'saldo_final', 'tipo_unidad', 'periodo')

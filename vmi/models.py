@@ -7,7 +7,7 @@ from django.utils import timezone
 # from django_userforeignkey.models.fields import UserForeignKey
 
 # Signals
-from django.db.models.signals import post_save, post_delete
+from django.db.models.signals import post_save, post_delete, pre_save
 from django.dispatch import receiver
 from django.db.models import Sum
 
@@ -142,12 +142,14 @@ class UnidadTipo(models.Model):
 
 #====== Tipo de Movimiento ========================
 class MovimientoTipo(models.Model):
+    IN = 'Entrada_Bodega'
+    OUT = 'Salida_Bodega'
     MOVES = [
-        ('Entrada_Bodega', 'Entrada de Bodega'),
-        ('Salida_Bodega', 'Salida de Bodega')
+        (IN, 'Entrada de Bodega'),
+        (OUT, 'Salida de Bodega')
     ]
     nombre_mov = models.CharField(max_length=30, primary_key=True)
-    estado = models.CharField(max_length=14, choices=MOVES, default='Entrada_Bodega')
+    estado = models.CharField(max_length=14, choices=MOVES, default=IN)
 
     def save(self):
         self.nombre_mov = self.nombre_mov.upper()
@@ -194,8 +196,8 @@ class Referencia(models.Model):
     nombre_ref = models.CharField(max_length=100)
     unique_id = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
     codigo_ean8 = models.CharField(max_length=8, unique=True)
-    codigo_ean13 = models.CharField(max_length=13)
-    codigo_ean128 = models.CharField(max_length=50)
+    codigo_ean13 = models.CharField(max_length=13, unique=True)
+    codigo_ean128 = models.CharField(max_length=50, unique=True)
     tipo_unida = models.ForeignKey(to=UnidadTipo, on_delete=models.PROTECT)
 
     def __str__(self):
@@ -298,13 +300,15 @@ class MovimientoFactura(Factura):
 class Inventario(models.Model):
     periodo = models.ForeignKey(Periodo, on_delete=models.CASCADE)
     bodega = models.ForeignKey(Bodega, on_delete=models.CASCADE)
-    saldo_inicial = models.DecimalField(decimal_places=3, max_digits=12)
-    entrada_inventario = models.DecimalField(decimal_places=3, max_digits=12)
-    salidad_inventario = models.DecimalField(decimal_places=3, max_digits=12)
-    saldo_final = models.DecimalField(decimal_places=3, max_digits=12)
+    saldo_inicial = models.DecimalField(decimal_places=3, max_digits=12, default=0)
+    entrada_inventario = models.DecimalField(decimal_places=3, max_digits=12, default=0)
+    salidad_inventario = models.DecimalField(decimal_places=3, max_digits=12, default=0)
+    saldo_final = models.DecimalField(decimal_places=3, max_digits=12, default=0)
     tipo_unidad = models.ForeignKey(to=UnidadTipo, on_delete=models.CASCADE)
 
     def save(self):
+        entrada = float(float(self.saldo_inicial) + float(self.entrada_inventario))
+        self.saldo_final = entrada - float(self.salidad_inventario)
         if self.periodo.estado == True:
             super(Inventario, self).save()
 
@@ -326,7 +330,7 @@ class FacturaEnc(UsuarioModelo):
     total = models.FloatField(default=0)
 
     def __str__(self):
-        return '{0}'.format(self.id)
+        return '{0}'.format(self.cliente)
 
     def save(self):
         self.total = self.sub_total - self.descuento
@@ -343,7 +347,7 @@ class FacturaEnc(UsuarioModelo):
 # ====== Facturación Detalles ========================
 class FacturaDet(UsuarioModelo):
     factura = models.ForeignKey(FacturaEnc, on_delete=models.CASCADE)
-    producto = models.ForeignKey(Referencia, on_delete=models.CASCADE, to_field='codigo_ean8')
+    producto = models.ForeignKey(Referencia, on_delete=models.CASCADE)
     cantidad = models.BigIntegerField(default=0)
     precio = models.FloatField(default=0)
     sub_total = models.FloatField(default=0)
@@ -354,7 +358,7 @@ class FacturaDet(UsuarioModelo):
         return '{0}'.format(self.producto)
 
     def save(self):
-        self.sub_total = float(float(int(self.cantidad)) * float(self.precio))
+        self.sub_total = float(int(self.cantidad) * float(self.precio))
         self.total = self.sub_total - float(self.descuento)
         super(FacturaDet, self).save()
 
@@ -373,20 +377,20 @@ def detalle_fac_guardar(sender, instance, **kwargs):
     referencia_id = instance.producto.id
 
     enc = FacturaEnc.objects.get(pk=factura_id)
-    if enc:
-        sub_total = FacturaDet.objects\
-            .filter(factura=factura_id)\
-            .aggregate(sub_total=Sum('sub_total'))\
-            .get('sub_total', 0.00)
+    # if enc:
+    #     sub_total = FacturaDet.objects\
+    #         .filter(factura=factura_id)\
+    #         .aggregate(sub_total=Sum('sub_total'))\
+    #         .get('sub_total', 0.00)
 
-        descuento = FacturaDet.objects\
-            .filter(factura=factura_id)\
-            .aggregate(descuento=Sum('descuento'))\
-            .get('descuento', 0.00)
+    #     descuento = FacturaDet.objects\
+    #         .filter(factura=factura_id)\
+    #         .aggregate(descuento=Sum('descuento'))\
+    #         .get('descuento', 0.00)
 
-        enc.sub_total = sub_total
-        enc.descuento = descuento
-        enc.save()
+    #     enc.sub_total = sub_total
+    #     enc.descuento = descuento
+    #     enc.save()
 
     prod = Referencia.objects.get(pk=referencia_id)
     # if prod:
@@ -408,3 +412,8 @@ post_save.connect(cerrar_periodo, sender=Periodo)
 #     if fecha_cierre:
 #         cambio = self.estado = False
 #         return cambio
+
+
+@receiver(pre_save, sender=Inventario)
+def saldoAnterior(sender, instance, **kwargs):
+    mi_inventario = instance.saldo_inicial
