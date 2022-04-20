@@ -3,7 +3,10 @@ from django.db import models
 from django.utils import timezone
 # from django_userforeignkey.models.fields import UserForeignKey
 
-
+# Django Signals
+from django.db.models.signals import post_save, pre_save
+from django.dispatch import receiver
+from django.db.models import Sum
 
 # Create your models here.
 # ======================== Modelo de usuarios ========================
@@ -61,7 +64,7 @@ class Departamento(models.Model):
 class Ciudad(models.Model):
     departamento = models.ForeignKey(to=Departamento, on_delete=models.CASCADE, related_name='Departamento')
     nombre_ciudad = models.CharField(max_length=200, blank=False, null=False)
-    codigo_dane_ciudad = models.CharField(max_length=3, unique=True)
+    codigo_dane_ciudad = models.CharField(max_length=3)
 
     def __str__(self):
         return self.nombre_ciudad.title()
@@ -78,16 +81,18 @@ class Ciudad(models.Model):
 # ====== Modelo Sede ========================
 class Sede(models.Model):
     ESTADO = [
-        ('A', 'Activo'),
+        ('O', 'Operativo'),
         ('F', 'Fuera de Servicio'),
         ('T', 'Traslado')
     ]
     nombre_sede = models.CharField(max_length=50, verbose_name='Nombre de Sede')
-    estado_sede = models.CharField(verbose_name='Estado de la Sede', max_length=1, choices=ESTADO, default='A')
+    estado_sede = models.CharField(verbose_name='Estado de Sede', max_length=1, choices=ESTADO, default='O')
     municipio = models.ForeignKey(to=Ciudad, on_delete=models.CASCADE)
+    direccion = models.CharField(verbose_name='Dirección', max_length=50, default='none')
 
     def __str__(self):
-        return self.nombre_sede.title()
+        text = f'{self.nombre_sede} - {self.municipio}'
+        return text
 
     def save(self):
         self.nombre_sede = self.nombre_sede.upper()
@@ -325,10 +330,6 @@ class FacturaEnc(UsuarioModelo):
     def __str__(self):
         return '{0}'.format(self.cliente)
 
-    def save(self):
-        self.total = self.sub_total - self.descuento
-        super(FacturaEnc, self).save()
-
     class Meta:
         verbose_name = 'Factura Encabezado'
         verbose_name_plural = 'Facturas Encabezados'
@@ -361,3 +362,21 @@ class FacturaDet(UsuarioModelo):
         # permissions = [
         #     ('sup_caja_fac', 'Permisos de CRUD para crear y editar facturas')
         # ]
+
+
+# === Signals del área de facturación ========================
+@receiver(post_save, sender=FacturaDet)
+def detalle_fac_guardar(sender, instance, **kwargs):
+    factura_id = instance.factura.id
+    # referencia_id = instance.producto.id
+
+    enc = FacturaEnc.objects.get(pk=factura_id)
+    if enc:
+        sub_total = FacturaDet.objects.filter(factura=factura_id).aggregate(
+            sub_total=Sum('sub_total')).get('sub_total', 0.00)
+        descuento = FacturaDet.objects.filter(factura=factura_id).aggregate(
+            descuento=Sum('descuento')).get('descuento', 0.00)
+        enc.sub_total = sub_total
+        enc.descuento = descuento
+        enc.total = sub_total - descuento
+        enc.save()

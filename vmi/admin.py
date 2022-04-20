@@ -25,18 +25,22 @@ class ReferenceAdmin(admin.ModelAdmin):
     list_display = ('__str__', 'codigo_ean8', 'unique_id')
 
 
-class FacturaAdmin(admin.ModelAdmin):
-    pass
-
-
 class FacturaInLine(admin.StackedInline):
     model = FacturaDet
     extra = 3
 
 
-class Factura2Admin(admin.ModelAdmin):
-    list_display = ('__str__', 'cantidad', 'precio', 'sub_total', 'total')
+class FacturaAdmin(admin.ModelAdmin):
+    inlines = [FacturaInLine]
+    list_display = ('__str__', 'id', 'fecha_modifica', 'sub_total', 'descuento', 'total')
 
+
+class Factura2Admin(admin.ModelAdmin):
+    list_display = ('id', '__str__', 'cantidad', 'precio', 'sub_total', 'total')
+
+
+class SedeAdmin(admin.ModelAdmin):
+    list_display = ('__str__', 'estado_sede')
 
 class MovimientoTipoAdmin(admin.ModelAdmin):
     list_display = ('__str__', 'tipo_de_estado')
@@ -51,15 +55,15 @@ admin.site.register(UnidadTipo)
 admin.site.register(Referencia, ReferenceAdmin)
 admin.site.register(Factura)
 admin.site.register(MovimientoFactura)
-admin.site.register(Proveedor)
+# admin.site.register(Proveedor)
 admin.site.register(Pedido)
 admin.site.register(MovimientoTipo, MovimientoTipoAdmin)
 admin.site.register(MovimientoPedido)
-admin.site.register(ProveedorPedido)
+# admin.site.register(ProveedorPedido)
 admin.site.register(FacturaEnc, FacturaAdmin)
-admin.site.register(FacturaDet, Factura2Admin)
+# admin.site.register(FacturaDet, Factura2Admin)
 admin.site.register(Bodega)
-admin.site.register(Sede)
+admin.site.register(Sede, SedeAdmin)
 
 @admin.register(Inventario)
 class InventarioAdmin(admin.ModelAdmin):
