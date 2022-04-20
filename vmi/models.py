@@ -190,7 +190,7 @@ class Referencia(models.Model):
     unique_id = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
     codigo_ean8 = models.CharField(max_length=8, unique=True)
     codigo_ean13 = models.CharField(max_length=13, unique=True)
-    codigo_ean128 = models.CharField(max_length=50, unique=True)
+    codigo_ean128 = models.CharField(max_length=50)
     tipo_unida = models.ForeignKey(to=UnidadTipo, on_delete=models.PROTECT)
 
     def __str__(self):
@@ -330,11 +330,11 @@ class FacturaEnc(UsuarioModelo):
         super(FacturaEnc, self).save()
 
     class Meta:
-        verbose_name_plural = 'Encabezados de Facturas'
-        verbose_name = 'Encabezado de Factura'
-        permissions = [
-            ('sup_caja_fac', 'Permisos de CRUD para crear y editar facturas')
-        ]
+        verbose_name = 'Factura Encabezado'
+        verbose_name_plural = 'Facturas Encabezados'
+        # permissions = [
+        #     ('sup_caja_fac', 'Permisos de CRUD para crear y editar facturas')
+        # ]
 
 
 # ====== Facturación Detalles ========================
@@ -356,8 +356,8 @@ class FacturaDet(UsuarioModelo):
         super(FacturaDet, self).save()
 
     class Meta:
-        verbose_name_plural = 'Detalles de Facturas'
-        verbose_name = 'Detalle de Factura'
+        verbose_name = 'Factura Detalle'
+        verbose_name_plural = 'Facturas Detalles'
         # permissions = [
         #     ('sup_caja_fac', 'Permisos de CRUD para crear y editar facturas')
         # ]

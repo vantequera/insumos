@@ -29,6 +29,11 @@ class FacturaAdmin(admin.ModelAdmin):
     pass
 
 
+class FacturaInLine(admin.StackedInline):
+    model = FacturaDet
+    extra = 3
+
+
 class Factura2Admin(admin.ModelAdmin):
     list_display = ('__str__', 'cantidad', 'precio', 'sub_total', 'total')
 

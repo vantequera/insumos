@@ -19,8 +19,8 @@ class PedidoSerializers(serializers.Serializer):
     members_limit = serializers.IntegerField()
 
 
-pedido = Pedido.objects.latest()
+# pedido = Pedido.objects.latest()
 
-serializer = PedidoSerializers(pedido)
+# serializer = PedidoSerializers(pedido)
 
-serializer.data
+# serializer.data
