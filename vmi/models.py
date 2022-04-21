@@ -318,6 +318,17 @@ class Inventario(models.Model):
 # ====== Modelo Invetario Movimiento ========================
 
 
+# ======================== Modelo de Saldos ========================
+# ====== Saldo Actual ========================
+class SaldoActual(models.Model):
+    pass
+
+
+# ====== Saldo Histórico ========================
+class SaldoHistorico(models.Model):
+    pass
+
+
 # ======================== Facturación ========================
 # ====== Facturación Encabezado ========================
 class FacturaEnc(Modelo):

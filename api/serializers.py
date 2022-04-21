@@ -10,13 +10,16 @@ class ProductoSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
-class PedidoSerializers(serializers.Serializer):
-    """ Pedidos Serializers """
-    name = serializers.CharField()
-    slug_name = serializers.SlugField()
-    rides_takens = serializers.IntegerField()
-    rides_offered = serializers.IntegerField()
-    members_limit = serializers.IntegerField()
+#####################################################
+################# Clase de API Rest #################
+
+# class PedidoSerializers(serializers.Serializer):
+#     """ Pedidos Serializers """
+#     name = serializers.CharField()
+#     slug_name = serializers.SlugField()
+#     rides_takens = serializers.IntegerField()
+#     rides_offered = serializers.IntegerField()
+#     members_limit = serializers.IntegerField()
 
 
 # pedido = Pedido.objects.latest()
