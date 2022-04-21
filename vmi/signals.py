@@ -5,11 +5,12 @@ from django.utils import timezone
 
 from vmi.models import FacturaDet, FacturaEnc, Referencia, Inventario, Periodo
 
-############################################################################
-############################################################################
-# Los signals no pueden ir fuera del modelo, aun no se como trabajarlo fuera
-############################################################################
-############################################################################
+##############################################################################
+##############################################################################
+# Los signals no pueden ir fuera del modelo, aun no se como trabajarlo fuera #
+########## Resuelto agregar esta linea from my_app.signals import * ##########
+##############################################################################
+##############################################################################
 
 # # === Signals del área de facturación ========================
 # @receiver(post_save, sender=FacturaDet)

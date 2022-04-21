@@ -11,7 +11,7 @@ from django.db.models import Sum
 # Create your models here.
 # ======================== Modelo de usuarios ========================
 # ====== Usuario Modelo Abstracto ========================
-class UsuarioModelo(models.Model):
+class Modelo(models.Model):
     fecha_crea = models.DateTimeField(auto_now_add=True)
     fecha_modifica = models.DateTimeField(auto_now=True)
     # usuario_crea = UserForeignKey(auto_user_add=True, related_name='+') # <== Anula el mapeo en reversa con el '+'
@@ -320,7 +320,7 @@ class Inventario(models.Model):
 
 # ======================== Facturación ========================
 # ====== Facturación Encabezado ========================
-class FacturaEnc(UsuarioModelo):
+class FacturaEnc(Modelo):
     cliente = models.ForeignKey(Proveedor, on_delete=models.CASCADE)
     fecha = models.DateTimeField(auto_now_add=True)
     sub_total = models.FloatField(default=0)
@@ -339,7 +339,7 @@ class FacturaEnc(UsuarioModelo):
 
 
 # ====== Facturación Detalles ========================
-class FacturaDet(UsuarioModelo):
+class FacturaDet(Modelo):
     factura = models.ForeignKey(FacturaEnc, on_delete=models.CASCADE)
     producto = models.ForeignKey(Referencia, on_delete=models.CASCADE)
     cantidad = models.BigIntegerField(default=0)
