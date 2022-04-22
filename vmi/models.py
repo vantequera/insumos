@@ -325,9 +325,9 @@ class Inventario(models.Model):
 # ====== Saldo Actual ========================
 class SaldoActual(Modelo):
     referencia = models.ForeignKey(Referencia, on_delete=models.CASCADE)
-    bodega = models.ForeignKey(Bodega, on_delete=models.CASCADE, default=1)
+    bodega = models.ForeignKey(Bodega, on_delete=models.CASCADE)
     cantidad = models.DecimalField(decimal_places=2, max_digits=6, default=0)
-    observacion = models.CharField(verbose_name='Observaciones', max_length=100, default='C')
+    observacion = models.CharField(verbose_name='Observaciones', max_length=100, default='22')
     temp_almacenamiento = models.CharField(
         verbose_name='Temperatura de almacenamiento',
         max_length=5,
@@ -335,20 +335,31 @@ class SaldoActual(Modelo):
     )
 
     def __str__(self):
-        return self.referencia
+        txt = '{0}'.format(self.referencia)
+        return txt
 
     def save(self):
         temp = f'{self.temp_almacenamiento} °C'
         self.temp_almacenamiento = temp
         super(SaldoActual, self).save()
 
+    class Meta:
+        verbose_name = 'Saldo Actual'
+        verbose_name_plural = 'Saldos Actuales'
+
 
 @receiver(post_save, sender=Referencia)
 def ingreso_referencia(sender, instance, **kwargs):
-    ref_id = sender.referencia.id
+    ref_id = instance.id
     ref = Referencia.objects.get(pk=ref_id)
-    if ref:
-        saldo = SaldoActual.objects.create(referencia=ref)
+    sald = SaldoActual.objects.get(referencia=ref)
+    sal_id = sald.referencia.id
+    if sal_id != ref_id:
+        bog = Bodega.objects.get(pk=1)
+        saldo = SaldoActual(
+            referencia=ref,
+            bodega=bog
+        )
         saldo.save()
 
 
@@ -360,6 +371,15 @@ class SaldoHistorico(models.Model):
 # ======================== Facturación ========================
 # ====== Facturación Encabezado ========================
 class FacturaEnc(Modelo):
+    """
+        Modelo de Factura Encabezado: *Mas parecido al modelo de traslado*
+        Modelo para generar facturas en el área de insumos con
+        sus respectivos campos de: *Proveedor al cual se le debe,
+        fecha a la cual pertenece la factura,
+        subtotal de todos los precios en la parte del cuerpo de la factura,
+        descuento total recibido en los productos adquiridos,
+        total a pagar en la factura que se generó
+    """
     cliente = models.ForeignKey(Proveedor, on_delete=models.CASCADE)
     fecha = models.DateTimeField(auto_now_add=True)
     sub_total = models.FloatField(default=0)
@@ -379,6 +399,17 @@ class FacturaEnc(Modelo):
 
 # ====== Facturación Detalles ========================
 class FacturaDet(Modelo):
+    """
+        Modelo de Factura Detalle:
+        Modelo para generar el cuerpo de las facturas con
+        sus respectivos campos de: Factura Encabezado a la cual pertenece,
+        producto al cual se está haciendo la salida,
+        cantidad por unidades basado en su estado,
+        precio equivalente por unidad,
+        sub total equivalente a la multiplicación de la cantidad con el precio,
+        descuento total recibido por itém,
+        total en precio pesos colombianos
+    """
     factura = models.ForeignKey(FacturaEnc, on_delete=models.CASCADE)
     producto = models.ForeignKey(Referencia, on_delete=models.CASCADE)
     cantidad = models.BigIntegerField(default=0)
@@ -406,16 +437,31 @@ class FacturaDet(Modelo):
 # === Signals del área de facturación ========================
 @receiver(post_save, sender=FacturaDet)
 def detalle_fac_guardar(sender, instance, **kwargs):
+    """Signal para el descuento de items en los detalles de facturas"""
     factura_id = instance.factura.id
-    # referencia_id = instance.producto.id
+    referencia_id = instance.producto.id
 
-    enc = FacturaEnc.objects.get(pk=factura_id)
-    if enc:
+    """ Suma de callbacks de valores hacia Factura Encabezado """
+    factura_encabezado = FacturaEnc.objects.get(pk=factura_id)
+    if factura_encabezado:
         sub_total = FacturaDet.objects.filter(factura=factura_id).aggregate(
-            sub_total=Sum('sub_total')).get('sub_total', 0.00)
+            sub_total=Sum('sub_total')).get('sub_total', 0.00
+        )
         descuento = FacturaDet.objects.filter(factura=factura_id).aggregate(
-            descuento=Sum('descuento')).get('descuento', 0.00)
-        enc.sub_total = sub_total
-        enc.descuento = descuento
-        enc.total = sub_total - descuento
-        enc.save()
+            descuento=Sum('descuento')).get('descuento', 0.00
+        )
+        factura_encabezado.sub_total = sub_total
+        factura_encabezado.descuento = descuento
+        factura_encabezado.total = sub_total - descuento
+        factura_encabezado.save()
+
+    """ Descontar las cantidades por cada referencia """
+    producto_a_cambiar = SaldoActual.objects.get(referencia=referencia_id)
+    producto_cantidad = int(producto_a_cambiar.cantidad)
+    instancia_cantidad = int(instance.cantidad)
+    producto_temperatura = producto_a_cambiar.temp_almacenamiento
+    if instancia_cantidad > producto_cantidad:
+        nueva_cant = producto_cantidad - instancia_cantidad
+        producto_cantidad = nueva_cant
+        producto_a_cambiar.temp_almacenamiento = producto_temperatura
+        producto_a_cambiar.save()

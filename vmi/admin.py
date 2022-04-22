@@ -72,4 +72,4 @@ class InventarioAdmin(admin.ModelAdmin):
 
 @admin.register(SaldoActual)
 class SaldoActualAdmin(admin.ModelAdmin):
-    list_display = ('__str__', 'bodega')
+    list_display = ('__str__', 'cantidad','temp_almacenamiento', 'bodega')
