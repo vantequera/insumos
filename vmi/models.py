@@ -1,5 +1,6 @@
 import datetime, uuid
 from django.db import models
+from django.core.exceptions import ValidationError
 from django.utils import timezone
 # from django_userforeignkey.models.fields import UserForeignKey
 
@@ -307,7 +308,9 @@ class Inventario(models.Model):
     def save(self):
         entrada = float(float(self.saldo_inicial) + float(self.entrada_inventario))
         self.saldo_final = entrada - float(self.salidad_inventario)
-        if self.periodo.estado == True:
+        if self.periodo.estado != True:
+            raise ValidationError(message='El operiodo de facturacion cerro')
+        else:
             super(Inventario, self).save()
 
     def __str__(self):

@@ -1,1 +1,31 @@
 Valmes Medical Inventory
+
+# Full Clean StackOverflow
+class Agenda(MarcadorTiempo):
+    def full_clean(exclude=None, validate_unique=True):
+        super(Agenda, self).full_clean(exclude, validate_unique)
+
+        try:
+            Agenda.objects.get(Q(
+                recurso_fisico=self.recurso_fisico,
+                # Cubre caso 1 y 2
+                Q(
+                    fecha_separacion__lt=self.fecha_separacion,
+                    fecha_devolucion__gt=self.fecha_separacion
+                ) ||
+                # Cubre caso 1 y 3
+                Q(
+                    fecha_separacion__lt=self.fecha_devolucion,
+                    fecha_devolucion__gt=self.fecha_devolucion
+                ) ||
+                # Cubre el caso 4
+                Q(
+                    fecha_separacion__gt=self.fecha_separacion,
+                    fecha_devolucion__lt=self.fecha_devolucion
+                )
+            ))
+            raise ValidationError('Recurso ocupado')
+        except Agenda.DoesNotExist:
+            pass
+        except Agenda.MultipleObjectsReturned:
+            raise ValidationError('Recurso ocupado')
