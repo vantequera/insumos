@@ -309,7 +309,7 @@ class Inventario(models.Model):
         entrada = float(float(self.saldo_inicial) + float(self.entrada_inventario))
         self.saldo_final = entrada - float(self.salidad_inventario)
         if self.periodo.estado != True:
-            raise ValidationError(message='El operiodo de facturacion cerro')
+            raise ValidationError(message='El operiodo de facturación cerró')
         else:
             super(Inventario, self).save()
 
@@ -323,8 +323,33 @@ class Inventario(models.Model):
 
 # ======================== Modelo de Saldos ========================
 # ====== Saldo Actual ========================
-class SaldoActual(models.Model):
-    pass
+class SaldoActual(Modelo):
+    referencia = models.ForeignKey(Referencia, on_delete=models.CASCADE)
+    bodega = models.ForeignKey(Bodega, on_delete=models.CASCADE, default=1)
+    cantidad = models.DecimalField(decimal_places=2, max_digits=6, default=0)
+    observacion = models.CharField(verbose_name='Observaciones', max_length=100, default='C')
+    temp_almacenamiento = models.CharField(
+        verbose_name='Temperatura de almacenamiento',
+        max_length=5,
+        default='22'
+    )
+
+    def __str__(self):
+        return self.referencia
+
+    def save(self):
+        temp = f'{self.temp_almacenamiento} °C'
+        self.temp_almacenamiento = temp
+        super(SaldoActual, self).save()
+
+
+@receiver(post_save, sender=Referencia)
+def ingreso_referencia(sender, instance, **kwargs):
+    ref_id = sender.referencia.id
+    ref = Referencia.objects.get(pk=ref_id)
+    if ref:
+        saldo = SaldoActual.objects.create(referencia=ref)
+        saldo.save()
 
 
 # ====== Saldo Histórico ========================

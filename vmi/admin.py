@@ -1,6 +1,6 @@
 import site
 from django.contrib import admin
-from vmi.models import Bodega, Ciudad, Factura, FacturaDet, FacturaEnc, Inventario, MovimientoFactura, MovimientoTipo, Pais, Departamento, MovimientoPedido, Pedido, Periodo, Proveedor, ProveedorPedido, Referencia, Sede, UnidadTipo
+from vmi.models import Bodega, Ciudad, Factura, FacturaDet, FacturaEnc, Inventario, MovimientoFactura, MovimientoTipo, Pais, Departamento, MovimientoPedido, Pedido, Periodo, Proveedor, ProveedorPedido, Referencia, SaldoActual, Sede, UnidadTipo
 
 
 # ======================== Modificadores de Modelos ========================
@@ -68,3 +68,8 @@ admin.site.register(Sede, SedeAdmin)
 @admin.register(Inventario)
 class InventarioAdmin(admin.ModelAdmin):
     list_display = ('__str__', 'saldo_final', 'tipo_unidad', 'periodo')
+
+
+@admin.register(SaldoActual)
+class SaldoActualAdmin(admin.ModelAdmin):
+    list_display = ('__str__', 'bodega')
