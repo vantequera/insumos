@@ -13,7 +13,7 @@ class DepartamentoAdmin(admin.ModelAdmin):
 
 
 class CiudadAdmin(admin.ModelAdmin):
-    list_display = ('__str__', 'codigo_dane_ciudad')
+    list_display = ('__str__', 'codigo_dane', 'departamentos')
 
 
 class PeriodoAdmin(admin.ModelAdmin):
@@ -72,4 +72,4 @@ class InventarioAdmin(admin.ModelAdmin):
 
 @admin.register(SaldoActual)
 class SaldoActualAdmin(admin.ModelAdmin):
-    list_display = ('__str__', 'cantidad','temp_almacenamiento', 'bodega')
+    list_display = ('__str__', 'cantidad','temp_alm', 'bodega')

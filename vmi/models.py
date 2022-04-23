@@ -47,7 +47,7 @@ class Pais(models.Model):
 # ====== Model Departamento ========================
 class Departamento(models.Model):
     pais = models.ForeignKey(to=Pais, on_delete=models.CASCADE, related_name='Pais')
-    nombre_departamento = models.CharField(max_length=200,blank=False ,null=False)
+    nombre_departamento = models.CharField(max_length=200, unique=True)
     codigo_dane_departamento = models.CharField(max_length=2, unique=True)
 
     def __str__(self):
@@ -64,18 +64,31 @@ class Departamento(models.Model):
 # ====== Model Ciudad/Municipio ========================
 class Ciudad(models.Model):
     departamento = models.ForeignKey(to=Departamento, on_delete=models.CASCADE, related_name='Departamento')
-    nombre_ciudad = models.CharField(max_length=200, blank=False, null=False)
+    nombre_ciudad = models.CharField(max_length=200, unique=True)
     codigo_dane_ciudad = models.CharField(max_length=3)
 
     def __str__(self):
         return self.nombre_ciudad.title()
+
+    def departamentos(self):
+        dep_nom = self.departamento.nombre_departamento
+        pais_nom = self.departamento.pais.nombre_pais
+        text = f'{dep_nom.title()} - {pais_nom.title()}'
+        return text
+
+    def codigo_dane(self):
+        dep_cod = self.departamento.codigo_dane_departamento
+        text = f'{dep_cod}{self.codigo_dane_ciudad}'
+        return text
 
     def save(self):
         self.nombre_ciudad = self.nombre_ciudad.upper()
         super(Ciudad, self).save()
 
     class Meta:
+        verbose_name = 'Ciudad'
         verbose_name_plural = 'Ciudades'
+        ordering = ['nombre_ciudad']
 
 
 # ======================== Modelos de Sede Bodega ========================
@@ -288,10 +301,11 @@ class Factura(models.Model):
 
 
 # ====== Modelo Factura de Movimiento ========================
-# class MovimientoFactura(Factura):
-#     referencia_id = models.ManyToManyField(Referencia)
-#     cantidad_compra = models.DecimalField(max_digits=12, decimal_places=3)
-#     unidad_compra = models.ForeignKey(to=UnidadTipo, on_delete=models.CASCADE)
+# ====== Modelo Deprecado
+class MovimientoFactura(Factura):
+    referencia_id = models.ManyToManyField(Referencia)
+    cantidad_compra = models.DecimalField(max_digits=12, decimal_places=3)
+    unidad_compra = models.ForeignKey(to=UnidadTipo, on_delete=models.CASCADE)
 
 
 # ======================== Modelos de Inventario ========================
@@ -327,7 +341,7 @@ class SaldoActual(Modelo):
     referencia = models.ForeignKey(Referencia, on_delete=models.CASCADE)
     bodega = models.ForeignKey(Bodega, on_delete=models.CASCADE)
     cantidad = models.DecimalField(decimal_places=2, max_digits=6, default=0)
-    observacion = models.CharField(verbose_name='Observaciones', max_length=100, default='22')
+    observacion = models.CharField(verbose_name='Observaciones', max_length=100, default='C')
     temp_almacenamiento = models.CharField(
         verbose_name='Temperatura de almacenamiento',
         max_length=5,
@@ -338,10 +352,14 @@ class SaldoActual(Modelo):
         txt = '{0}'.format(self.referencia)
         return txt
 
-    def save(self):
-        temp = f'{self.temp_almacenamiento} °C'
-        self.temp_almacenamiento = temp
-        super(SaldoActual, self).save()
+    def temp_alm(self):
+        text = f'{self.temp_almacenamiento} °C'
+        return text
+
+    # def save(self):
+    #     temp = f'{self.temp_almacenamiento} °C'
+    #     self.temp_almacenamiento = temp
+    #     super(SaldoActual, self).save()
 
     class Meta:
         verbose_name = 'Saldo Actual'
@@ -354,7 +372,7 @@ def ingreso_referencia(sender, instance, **kwargs):
     ref = Referencia.objects.get(pk=ref_id)
     sald = SaldoActual.objects.get(referencia=ref)
     sal_id = sald.referencia.id
-    if sal_id != ref_id:
+    if sal_id == ref_id:
         bog = Bodega.objects.get(pk=1)
         saldo = SaldoActual(
             referencia=ref,
@@ -440,9 +458,9 @@ def detalle_fac_guardar(sender, instance, **kwargs):
     """Signal para el descuento de items en los detalles de facturas"""
     factura_id = instance.factura.id
     referencia_id = instance.producto.id
+    factura_encabezado = FacturaEnc.objects.get(pk=factura_id)
 
     """ Suma de callbacks de valores hacia Factura Encabezado """
-    factura_encabezado = FacturaEnc.objects.get(pk=factura_id)
     if factura_encabezado:
         sub_total = FacturaDet.objects.filter(factura=factura_id).aggregate(
             sub_total=Sum('sub_total')).get('sub_total', 0.00
@@ -460,6 +478,8 @@ def detalle_fac_guardar(sender, instance, **kwargs):
     producto_cantidad = int(producto_a_cambiar.cantidad)
     instancia_cantidad = int(instance.cantidad)
     producto_temperatura = producto_a_cambiar.temp_almacenamiento
+
+    """ Comprobación de instancias para descontar """
     if instancia_cantidad > producto_cantidad:
         nueva_cant = producto_cantidad - instancia_cantidad
         producto_cantidad = nueva_cant
