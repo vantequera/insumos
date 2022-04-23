@@ -29,3 +29,73 @@ class Agenda(MarcadorTiempo):
             pass
         except Agenda.MultipleObjectsReturned:
             raise ValidationError('Recurso ocupado')
+
+
+##############################################################
+####### Realizar un metodo para los paquetes recibidos #######
+########## convertirlos en unidades automaticamente ##########
+###### a su unidad basica *Tambien puede ser un Signal* ######
+##############################################################
+
+
+##############################################################
+######################### Queryset's #########################
+
+###################### Creando Objetos ######################
+>>> b = Blog(name='car blog', tagline='los mejores carros')
+>>> b.save()
+>>> Blog.objects.all()
+<Queryset [<Blog: car blog>]>
+>>> b.name = 'new name'
+>>> b.save()
+>>> Blog.objects.all()
+<Queryset [<Blog: new name>]>
+>>> entry = Entry(tagline='This car is great', blog=b, body_text='Contenido', pub_date=timezone.now())
+>>> entry.save()
+>>> b
+<Blog: new name>
+>>> b2 = Blog(name='another blog', tagline='los mejores carros 2')
+>>> b2.save()
+>>> b2
+<Blog: another blog>
+
+################### Casos para ForeignKey ###################
+>>> entry.blog = b2
+>>> entry.save()
+>>> entry.blog
+<Blog: another blog>
+
+#################### Casos para Many2Many ###################
+>>> autor = Author(name='ruben', email='ruben@mail.com')
+>>> autor.save()
+>>>autor
+<Author: ruben>
+>>> entry.authors.add(autor)
+>>> entry.save()
+>>> entry.authors.all()
+<Queryset [<Author: ruben>]>
+>>> jhon = Author.objects.create(name='jhon', email='jhon@mail.com)
+>>> sali = Author.objects.create(name='sali', email='sali@mail.com)
+>>> entry.authors.add(jhon, sali)
+>>> entry.save()
+>>> entry.authors.all()
+<Queryset [<Author: ruben>, <Author: jhon>, <Author: sali>]>
+
+###################### Reading objects ######################
+>>> Blog.objects
+<django.db.models.manager.Manager object at 0x00000209781ABE10> # <== Object Manager de Django
+>>> Blog.objects.all()
+<Queryset [<Blog: new name>, <Blog: another blog>]>
+>>> Blog.objects.filter(name='new name')
+<Queryset [<Blog: new name>]>
+>>> Entry.objects.all()
+<Queryset [<Entry: This car iis great>]>
+>>> e = Entry.objects.first()
+>>> e.pub_date
+datetime.date(2020, 3, 3)
+>>> Entry.objects.filter(pub_date__year=2020)
+<Queryset [<Entry: This car iis great>]>
+>>> Entry.objects.filter(pub_date__month=3)
+<Queryset [<Entry: This car iis great>]>
+>>> e.rating
+7

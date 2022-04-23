@@ -128,7 +128,7 @@ class UnidadTipo(models.Model):
     ]
     tipo_unidad = models.CharField(max_length=50, primary_key=True)
     estado_unidad = models.CharField(max_length=1, choices=ESTADO)
-#    unidad_maestra = models.
+#    unidad_maestra = models.CharField(max_length=50)
     formula = models.DecimalField(decimal_places=6, max_digits=12)
 
     def save(self):
@@ -266,7 +266,7 @@ class MovimientoPedido(Pedido):
     def _get_valor_compra(self):
         return self.cantidad_solicitada*self.valor_movimiento
 
-    valor_compra = property(_get_valor_compra)
+    valor_compra = property(_get_valor_compra) # <== Ya no es necesario
 
 
 # ====== Modelo Pedido Proveedores ========================
@@ -288,10 +288,10 @@ class Factura(models.Model):
 
 
 # ====== Modelo Factura de Movimiento ========================
-class MovimientoFactura(Factura):
-    referencia_id = models.ManyToManyField(Referencia)
-    cantidad_compra = models.DecimalField(max_digits=12, decimal_places=3)
-    unidad_compra = models.ForeignKey(to=UnidadTipo, on_delete=models.CASCADE)
+# class MovimientoFactura(Factura):
+#     referencia_id = models.ManyToManyField(Referencia)
+#     cantidad_compra = models.DecimalField(max_digits=12, decimal_places=3)
+#     unidad_compra = models.ForeignKey(to=UnidadTipo, on_delete=models.CASCADE)
 
 
 # ======================== Modelos de Inventario ========================
