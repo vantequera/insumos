@@ -1,6 +1,22 @@
 import site
 from django.contrib import admin
-from vmi.models import Bodega, Ciudad, Factura, FacturaDet, FacturaEnc, Inventario, MovimientoFactura, MovimientoTipo, Pais, Departamento, MovimientoPedido, Pedido, Periodo, Proveedor, ProveedorPedido, Referencia, SaldoActual, Sede, UnidadTipo
+from vmi.models import Bodega, Ciudad, Factura, FacturaDet, FacturaEnc, Ingreso, IngresoRef, Inventario, MovimientoFactura, MovimientoTipo, Pais, Departamento, MovimientoPedido, Pedido, Periodo, Proveedor, ProveedorPedido, Referencia, SaldoActual, Salida, SalidaRef, Sede, UnidadTipo
+
+
+# ======================== StacksInLine ========================
+class FacturaInLine(admin.StackedInline):
+    model = FacturaDet
+    extra = 1
+
+
+class IngresoInLine(admin.StackedInline):
+    model = IngresoRef
+    extra = 1
+
+
+class SalidaInLine(admin.StackedInline):
+    model = SalidaRef
+    extra = 1
 
 
 # ======================== Modificadores de Modelos ========================
@@ -23,11 +39,6 @@ class PeriodoAdmin(admin.ModelAdmin):
 
 class ReferenceAdmin(admin.ModelAdmin):
     list_display = ('__str__', 'codigo_ean8', 'unique_id')
-
-
-class FacturaInLine(admin.StackedInline):
-    model = FacturaDet
-    extra = 3
 
 
 class FacturaAdmin(admin.ModelAdmin):
@@ -65,11 +76,24 @@ admin.site.register(FacturaEnc, FacturaAdmin)
 admin.site.register(Bodega)
 admin.site.register(Sede, SedeAdmin)
 
+# Inventario
 @admin.register(Inventario)
 class InventarioAdmin(admin.ModelAdmin):
     list_display = ('__str__', 'saldo_final', 'tipo_unidad', 'periodo')
 
-
+# Saldo Actual
 @admin.register(SaldoActual)
 class SaldoActualAdmin(admin.ModelAdmin):
     list_display = ('__str__', 'cantidad','temp_alm', 'bodega')
+
+# Ingreso
+@admin.register(Ingreso)
+class IngresoAdmin(admin.ModelAdmin):
+    inlines = [IngresoInLine]
+    list_display = ('__str__', 'factura_prov', 'proveedor')
+
+# Ingreso
+@admin.register(Salida)
+class IngresoAdmin(admin.ModelAdmin):
+    inlines = [SalidaInLine]
+    list_display = ('__str__', 'fecha', 'sede_sal')

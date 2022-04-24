@@ -1,10 +1,12 @@
-import datetime, uuid
+# Sys
+import uuid
+
+# Django Models
 from django.db import models
-from django.core.exceptions import ValidationError
 from django.utils import timezone
-# from django_userforeignkey.models.fields import UserForeignKey
 
 # Django Signals
+from django.core.exceptions import ValidationError, ObjectDoesNotExist, EmptyResultSet
 from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
 from django.db.models import Sum
@@ -132,6 +134,7 @@ class Bodega(models.Model):
         self.nombre = self.nombre.upper()
         super(Bodega, self).save()
 
+
 # ======================== Modelos Tipo ========================
 # ====== Tipo de Unidad ========================
 class UnidadTipo(models.Model):
@@ -218,6 +221,32 @@ class Referencia(models.Model):
     def save(self):
         self.nombre_ref = self.nombre_ref.upper()
         super(Referencia, self).save()
+
+
+# ====== Modelo Abstracto Base ========================
+class CommonInfo(models.Model):
+    fecha = models.DateTimeField('Fecha y Hora')
+    transporte = models.CharField('Transportadora', max_length=100)
+    bodega_des = models.ForeignKey(Bodega, on_delete=models.PROTECT, verbose_name='Bodega Destino')
+
+    class Meta:
+        abstract = True
+
+
+class CommonInfoRef(models.Model):
+    referencia_id = models.ForeignKey(Referencia, on_delete=models.CASCADE)
+    empaque = models.CharField(verbose_name='Empaque/Embalaje en General', max_length=30)
+    lote = models.CharField(verbose_name='Lote de paquete', max_length=8)
+    fecha_vencimiento = models.DateField()
+    cantidad = models.IntegerField('Cantidad Referencia Recibida')
+    tipo_unidad = models.ForeignKey(UnidadTipo, on_delete=models.CASCADE)
+    observaciones = models.CharField('Observaciones', max_length=200)
+    integridad = models.CharField('Integridad de la Referencia', max_length=5)
+    apariencia = models.CharField('Apariencia de la Referencia', max_length=5)
+    temp = models.CharField('Temperatura de Almacenamiento', max_length=2)
+
+    class Meta:
+        abstract = True
 
 
 # ======================== Modelo de Proveedor ========================
@@ -332,7 +361,61 @@ class Inventario(models.Model):
         return txt.format(self.bodega)
 
 
-# ====== Modelo Invetario Movimiento ========================
+# ====== Modelo Inventario Movimiento ========================
+
+
+# ======================== Modelos de Ingreso de Insumos ========================
+# ====== Modelo de ingreso de insumos HEAD ========================
+class Ingreso(CommonInfo):
+    sede_ing = models.ForeignKey(Sede, on_delete=models.PROTECT)
+    factura_prov = models.CharField('Factura Recibida', max_length=50)
+    proveedor = models.ForeignKey(Proveedor, on_delete=models.PROTECT, verbose_name='Proveedor')
+
+    def __str__(self):
+        text = f'Ingreso {self.bodega_des} 🟢'
+        return text
+
+    class Meta:
+        verbose_name = 'Ingreso de Referencias'
+        verbose_name_plural = 'Ingresos de Referencias'
+
+
+# ====== Modelo de ingreso de insumos BODY ========================
+class IngresoRef(CommonInfoRef):
+    ingreso = models.ForeignKey(Ingreso, on_delete=models.CASCADE, verbose_name='Factura de Ingreso')
+
+    def __str__(self):
+        return self.referencia_id
+
+    class Meta:
+        verbose_name = 'Referencia de Ingreso'
+        verbose_name_plural = 'Referencias de Ingresos'
+
+
+# ======================== Modelos de Salida de Insumos ========================
+# ====== Modelo de Salida de insumos HEAD ========================
+class Salida(CommonInfo):
+    sede_sal = models.ForeignKey(Sede, on_delete=models.PROTECT)
+
+    def __str__(self):
+        text = f'Salida {self.bodega_des} 🔴'
+        return text
+
+    class Meta:
+        verbose_name = 'Salida de Referencia'
+        verbose_name_plural = 'Salidas de Referencias'
+
+
+# ====== Modelo de Salida de insumos BODY ========================
+class SalidaRef(CommonInfo):
+    salida = models.ForeignKey(Salida, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return self.referencia_id
+
+    class Meta:
+        verbose_name = 'Referencia de Salida'
+        verbose_name_plural = 'Referencias de Salidas'
 
 
 # ======================== Modelo de Saldos ========================
@@ -356,29 +439,10 @@ class SaldoActual(Modelo):
         text = f'{self.temp_almacenamiento} °C'
         return text
 
-    # def save(self):
-    #     temp = f'{self.temp_almacenamiento} °C'
-    #     self.temp_almacenamiento = temp
-    #     super(SaldoActual, self).save()
-
     class Meta:
         verbose_name = 'Saldo Actual'
         verbose_name_plural = 'Saldos Actuales'
 
-
-@receiver(post_save, sender=Referencia)
-def ingreso_referencia(sender, instance, **kwargs):
-    ref_id = instance.id
-    ref = Referencia.objects.get(pk=ref_id)
-    sald = SaldoActual.objects.get(referencia=ref)
-    sal_id = sald.referencia.id
-    if sal_id == ref_id:
-        bog = Bodega.objects.get(pk=1)
-        saldo = SaldoActual(
-            referencia=ref,
-            bodega=bog
-        )
-        saldo.save()
 
 
 # ====== Saldo Histórico ========================
@@ -452,7 +516,48 @@ class FacturaDet(Modelo):
         # ]
 
 
-# === Signals del área de facturación ========================
+# ====== Signals de Referencias creadas ========================
+@receiver(post_save, sender=Referencia)
+def ingreso_referencia(sender, instance, **kwargs):
+    ref_id = instance.id
+    try:
+        if SaldoActual.objects.get(referencia__pk=ref_id):
+            print('Referencia en existencia')
+
+    except ObjectDoesNotExist:
+        ref = Referencia.objects.get(pk=ref_id)
+        bodegas = Bodega.objects.all()
+        for bodega in bodegas:
+            saldo = SaldoActual(
+                referencia=ref,
+                bodega=bodega
+            )
+            saldo.save()
+
+
+# ====== Signal de Bodega ligado a saldos ========================
+@receiver(post_save, sender=Bodega)
+def creacion_saldos(sender, instance, **kwargs):
+    bodega_id = instance.id
+    try:
+        saldos = SaldoActual.objects.filter(bodega__pk=bodega_id)
+        saldo_list = list(saldos)
+        if len(saldo_list) == 0:
+            print('Bodega en los Saldos Actuales')
+            raise EmptyResultSet
+
+    except EmptyResultSet:
+        bod_nueva = Bodega.objects.get(pk=bodega_id)
+        referencias = Referencia.objects.all()
+        for ref in referencias:
+            saldo = SaldoActual(
+                referencia=ref,
+                bodega=bod_nueva
+            )
+            saldo.save()
+
+
+# ===== Signals del área de facturación ========================
 @receiver(post_save, sender=FacturaDet)
 def detalle_fac_guardar(sender, instance, **kwargs):
     """Signal para el descuento de items en los detalles de facturas"""
@@ -474,7 +579,7 @@ def detalle_fac_guardar(sender, instance, **kwargs):
         factura_encabezado.save()
 
     """ Descontar las cantidades por cada referencia """
-    producto_a_cambiar = SaldoActual.objects.get(referencia=referencia_id)
+    producto_a_cambiar = SaldoActual.objects.get(referencia__pk=referencia_id)
     producto_cantidad = int(producto_a_cambiar.cantidad)
     instancia_cantidad = int(instance.cantidad)
     producto_temperatura = producto_a_cambiar.temp_almacenamiento

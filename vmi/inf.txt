@@ -37,6 +37,10 @@ class Agenda(MarcadorTiempo):
 ###### a su unidad basica *Tambien puede ser un Signal* ######
 ##############################################################
 
+Crear un signal para cuando se agregue una nueva bodega,
+esta pueda generar todas las referencias en el saldo actual
+igualadas a 0
+
 
 ##############################################################
 ######################### Queryset's #########################
