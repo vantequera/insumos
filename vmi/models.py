@@ -9,7 +9,7 @@ from django.utils import timezone
 from django.core.exceptions import ValidationError, ObjectDoesNotExist, EmptyResultSet
 from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
-from django.db.models import Sum
+from django.db.models import Sum, Q, F, Min
 
 # Create your models here.
 # ======================== Modelo de usuarios ========================
@@ -234,7 +234,7 @@ class CommonInfo(models.Model):
 
 
 class CommonInfoRef(models.Model):
-    referencia_id = models.ForeignKey(Referencia, on_delete=models.CASCADE)
+    referencia = models.ForeignKey(Referencia, on_delete=models.CASCADE)
     empaque = models.CharField(verbose_name='Empaque/Embalaje en General', max_length=30)
     lote = models.CharField(verbose_name='Lote de paquete', max_length=8)
     fecha_vencimiento = models.DateField()
@@ -372,8 +372,8 @@ class Ingreso(CommonInfo):
     proveedor = models.ForeignKey(Proveedor, on_delete=models.PROTECT, verbose_name='Proveedor')
 
     def __str__(self):
-        text = f'Ingreso {self.bodega_des} 🟢'
-        return text
+        txt = f'Ingreso {self.bodega_des} 🟢'
+        return txt
 
     class Meta:
         verbose_name = 'Ingreso de Referencias'
@@ -385,7 +385,7 @@ class IngresoRef(CommonInfoRef):
     ingreso = models.ForeignKey(Ingreso, on_delete=models.CASCADE, verbose_name='Factura de Ingreso')
 
     def __str__(self):
-        return self.referencia_id
+        return str(self.referencia_id)
 
     class Meta:
         verbose_name = 'Referencia de Ingreso'
@@ -398,8 +398,8 @@ class Salida(CommonInfo):
     sede_sal = models.ForeignKey(Sede, on_delete=models.PROTECT)
 
     def __str__(self):
-        text = f'Salida {self.bodega_des} 🔴'
-        return text
+        txt = f'Salida {self.bodega_des} 🔴'
+        return txt
 
     class Meta:
         verbose_name = 'Salida de Referencia'
@@ -411,7 +411,7 @@ class SalidaRef(CommonInfo):
     salida = models.ForeignKey(Salida, on_delete=models.CASCADE)
 
     def __str__(self):
-        return self.referencia_id
+        return str(self.referencia_id)
 
     class Meta:
         verbose_name = 'Referencia de Salida'
@@ -533,6 +533,19 @@ def ingreso_referencia(sender, instance, **kwargs):
                 bodega=bodega
             )
             saldo.save()
+
+
+# ======= Signal de ingreso de insumos ========================
+@receiver(post_save, sender=IngresoRef)
+def ingreso_insumo(sender, instance, **kwargs):
+    bod_des = instance.ingreso.bodega_des.id
+    referencia_id = instance.referencia.id
+    saldo = SaldoActual.objects.get(Q(bodega__pk=bod_des) & Q(referencia__pk=referencia_id))
+    if saldo:
+        saldo.cantidad = saldo.cantidad + instance.cantidad
+        saldo.observacion = instance.observaciones
+        saldo.temp_almacenamiento = instance.temp
+        saldo.save()
 
 
 # ====== Signal de Bodega ligado a saldos ========================
