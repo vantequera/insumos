@@ -128,7 +128,8 @@ class Bodega(models.Model):
     municipio = models.ForeignKey(Ciudad, on_delete=models.CASCADE)
 
     def __str__(self):
-        return self.nombre.title()
+        txt = f'{self.nombre} - {self.municipio}'
+        return txt.title()
 
     def save(self):
         self.nombre = self.nombre.upper()
@@ -372,7 +373,7 @@ class Inventario(models.Model):
 class Ingreso(CommonInfo):
     sede_ing = models.ForeignKey(Sede, on_delete=models.PROTECT)
     factura_prov = models.CharField('Factura Recibida', max_length=50)
-    proveedor = models.ForeignKey(Proveedor, on_delete=models.PROTECT, verbose_name='Proveedor')
+    proveedor = models.ForeignKey(Proveedor, on_delete=models.PROTECT, verbose_name='Proveedor', null=True)
 
     def __str__(self):
         txt = f'Ingreso {self.bodega_des} 🟢'
@@ -554,15 +555,12 @@ def ingreso_insumo(sender, instance, **kwargs):
 # ======= Signal de salida de insumos ========================
 @receiver(post_save, sender=SalidaRef)
 def salida_insumo(sender, instance, **kwargs):
-    bod_des = instance.ingreso.bodega_des.id
+    bod_des = instance.salida.bodega_des.id
     referencia_id = instance.referencia.id
-    saldo = SaldoActual.objects.get(
-        Q(bodega__pk=bod_des) & Q(referencia__pk=referencia_id))
-    if saldo:
-        saldo.cantidad = saldo.cantidad + instance.cantidad
-        saldo.observacion = instance.observaciones
-        saldo.temp_almacenamiento = instance.temp
-        saldo.save()
+    saldo_sal = SaldoActual.objects.get(Q(bodega__pk=bod_des) & Q(referencia__pk=referencia_id))
+    if saldo_sal:
+        saldo_sal.cantidad = saldo_sal.cantidad - instance.cantidad
+        saldo_sal.save()
 
 
 # ====== Signal de Bodega ligado a saldos ========================
