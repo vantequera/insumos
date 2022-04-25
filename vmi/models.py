@@ -231,7 +231,7 @@ STATUS_ENV = [
 class CommonInfo(models.Model):
     fecha = models.DateTimeField('Fecha y Hora')
     transporte = models.CharField('Transportadora', max_length=100)
-    bodega_des = models.ForeignKey(Bodega, on_delete=models.PROTECT, verbose_name='Bodega Destino')
+    bodega_des = models.ForeignKey(Bodega, on_delete=models.PROTECT, verbose_name='Bodega De Ingreso')
 
     class Meta:
         abstract = True
@@ -369,7 +369,7 @@ class Inventario(models.Model):
 
 
 # ======================== Modelos de Ingreso de Insumos ========================
-# ====== Modelo de ingreso de insumos HEAD ========================
+# ====== Modelo de ingreso de insumos HEAD P - B ========================
 class Ingreso(CommonInfo):
     sede_ing = models.ForeignKey(Sede, on_delete=models.PROTECT)
     factura_prov = models.CharField('Factura Recibida', max_length=50)
@@ -380,8 +380,22 @@ class Ingreso(CommonInfo):
         return txt
 
     class Meta:
-        verbose_name = 'Ingreso de Referencias'
-        verbose_name_plural = 'Ingresos de Referencias'
+        verbose_name = 'Ingreso Proveedor - Bodega'
+        verbose_name_plural = 'Ingresos Proveedores - Bodegas'
+
+
+# ====== Modelo de ingreso de insumos HEAD B-B ========================
+# class Ingreso(CommonInfo):
+#     bodega_exp = models.ForeignKey(Bodega, on_delete=models.PROTECT)
+#     pedido = models.ForeignKey(Pedido, on_delete=models.PROTECT)
+
+#     def __str__(self):
+#         txt = f'Ingreso {self.bodega_des} 🟢'
+#         return txt
+
+#     class Meta:
+#         verbose_name = 'Ingreso Bodega - Bodega'
+#         verbose_name_plural = 'Ingresos Bodegas - Bodegas'
 
 
 # ====== Modelo de ingreso de insumos BODY ========================
@@ -563,7 +577,7 @@ def salida_insumo(sender, instance, **kwargs):
         saldo_sal.save()
 
 
-# ====== Signal de Bodega ligado a saldos ========================
+# ====== Signal de Bodega ligado a referencias de insumos ========================
 @receiver(post_save, sender=Bodega)
 def creacion_saldos(sender, instance, **kwargs):
     bodega_id = instance.id
@@ -571,7 +585,7 @@ def creacion_saldos(sender, instance, **kwargs):
         saldos = SaldoActual.objects.filter(bodega__pk=bodega_id)
         saldo_list = list(saldos)
         if len(saldo_list) == 0:
-            print('Bodega en los Saldos Actuales')
+            print('Bodega sin los Saldos Actuales')
             raise EmptyResultSet
 
     except EmptyResultSet:
@@ -618,3 +632,6 @@ def detalle_fac_guardar(sender, instance, **kwargs):
         producto_cantidad = nueva_cant
         producto_a_cambiar.temp_almacenamiento = producto_temperatura
         producto_a_cambiar.save()
+
+    else:
+        raise ValidationError
