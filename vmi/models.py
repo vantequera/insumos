@@ -7,7 +7,7 @@ from django.utils import timezone
 
 # Django Signals
 from django.core.exceptions import ValidationError, ObjectDoesNotExist, EmptyResultSet
-from django.db.models.signals import post_save, pre_save
+from django.db.models.signals import post_save, pre_save, pre_delete, post_delete
 from django.dispatch import receiver
 from django.db.models import Sum, Q, F, Min
 
@@ -222,7 +222,10 @@ class Referencia(models.Model):
         self.nombre_ref = self.nombre_ref.upper()
         super(Referencia, self).save()
 
-
+STATUS_ENV = [
+    ('C', 'Cumple'),
+    ('NC', 'No Cumple')
+]
 # ====== Modelo Abstracto Base ========================
 class CommonInfo(models.Model):
     fecha = models.DateTimeField('Fecha y Hora')
@@ -235,14 +238,14 @@ class CommonInfo(models.Model):
 
 class CommonInfoRef(models.Model):
     referencia = models.ForeignKey(Referencia, on_delete=models.CASCADE)
-    empaque = models.CharField(verbose_name='Empaque/Embalaje en General', max_length=30)
+    empaque = models.CharField(verbose_name='Empaque/Embalaje en General', max_length=2, choices=STATUS_ENV)
     lote = models.CharField(verbose_name='Lote de paquete', max_length=8)
-    fecha_vencimiento = models.DateField()
+    fecha_vencimiento = models.DateField(verbose_name='Fecha de Vencimiento')
     cantidad = models.IntegerField('Cantidad Referencia Recibida')
     tipo_unidad = models.ForeignKey(UnidadTipo, on_delete=models.CASCADE)
     observaciones = models.CharField('Observaciones', max_length=200)
-    integridad = models.CharField('Integridad de la Referencia', max_length=5)
-    apariencia = models.CharField('Apariencia de la Referencia', max_length=5)
+    integridad = models.CharField('Integridad de la Referencia', max_length=2, choices=STATUS_ENV)
+    apariencia = models.CharField('Apariencia de la Referencia', max_length=2, choices=STATUS_ENV)
     temp = models.CharField('Temperatura de Almacenamiento', max_length=2)
 
     class Meta:
@@ -395,7 +398,7 @@ class IngresoRef(CommonInfoRef):
 # ======================== Modelos de Salida de Insumos ========================
 # ====== Modelo de Salida de insumos HEAD ========================
 class Salida(CommonInfo):
-    sede_sal = models.ForeignKey(Sede, on_delete=models.PROTECT)
+    sede_des = models.ForeignKey(Sede, on_delete=models.PROTECT, verbose_name='Sede Destino', default=1)
 
     def __str__(self):
         txt = f'Salida {self.bodega_des} 🔴'
@@ -407,7 +410,7 @@ class Salida(CommonInfo):
 
 
 # ====== Modelo de Salida de insumos BODY ========================
-class SalidaRef(CommonInfo):
+class SalidaRef(CommonInfoRef):
     salida = models.ForeignKey(Salida, on_delete=models.CASCADE)
 
     def __str__(self):
@@ -541,6 +544,20 @@ def ingreso_insumo(sender, instance, **kwargs):
     bod_des = instance.ingreso.bodega_des.id
     referencia_id = instance.referencia.id
     saldo = SaldoActual.objects.get(Q(bodega__pk=bod_des) & Q(referencia__pk=referencia_id))
+    if saldo:
+        saldo.cantidad = saldo.cantidad + instance.cantidad
+        saldo.observacion = instance.observaciones
+        saldo.temp_almacenamiento = instance.temp
+        saldo.save()
+
+
+# ======= Signal de salida de insumos ========================
+@receiver(post_save, sender=SalidaRef)
+def salida_insumo(sender, instance, **kwargs):
+    bod_des = instance.ingreso.bodega_des.id
+    referencia_id = instance.referencia.id
+    saldo = SaldoActual.objects.get(
+        Q(bodega__pk=bod_des) & Q(referencia__pk=referencia_id))
     if saldo:
         saldo.cantidad = saldo.cantidad + instance.cantidad
         saldo.observacion = instance.observaciones

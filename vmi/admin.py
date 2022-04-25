@@ -96,4 +96,4 @@ class IngresoAdmin(admin.ModelAdmin):
 @admin.register(Salida)
 class IngresoAdmin(admin.ModelAdmin):
     inlines = [SalidaInLine]
-    list_display = ('__str__', 'fecha', 'sede_sal')
+    list_display = ('__str__', 'fecha', 'sede_des')
