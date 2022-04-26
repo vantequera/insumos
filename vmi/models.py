@@ -12,8 +12,20 @@ from django.dispatch import receiver
 from django.db.models import Sum, Q, F, Min
 
 # Create your models here.
-# ======================== Modelo de usuarios ========================
-# ====== Usuario Modelo Abstracto ========================
+STATUS_CODE = [
+    ('SE', 'Solicitud Enviada'),
+    ('AP', 'Aprobado'),
+    ('CA', 'Cancelado'),
+    ('RZ', 'Rechazado'),
+    ('EN', 'Enviado'),
+    ('RC', 'Recibido')
+]
+STATUS_ENV = [
+    ('C', 'Cumple'),
+    ('NC', 'No Cumple')
+]
+# ======================== Modelo de usuarios ======================== >= Modelo aún por trabajár
+# ====== Usuario Modelo Abstracto ======================== >= Se debe mover hacia una App dedicada
 class Modelo(models.Model):
     fecha_crea = models.DateTimeField(auto_now_add=True)
     fecha_modifica = models.DateTimeField(auto_now=True)
@@ -24,13 +36,13 @@ class Modelo(models.Model):
         abstract = True
 
 
-# ====== Usuario Modelo Principal ========================
+# ====== Usuario Modelo Principal ======================== >= Se debe mover hacia una App dedicada
 class Usuario():
     pass
 
 
-# ======================== Modelos de Región ========================
-# ====== Model Pais ========================
+# ======================== Modelos de Región ======================== Modelos listos
+# ====== Model Pais ======================== >= Se encuentra listo
 class Pais(models.Model):
     nombre_pais = models.CharField(max_length=200, blank=False, null=False)
     codigo_pais = models.CharField(max_length=20, blank=False, null=False, unique=True)
@@ -46,7 +58,7 @@ class Pais(models.Model):
         verbose_name_plural = 'Paises'
 
 
-# ====== Model Departamento ========================
+# ====== Model Departamento ======================== >= Se encuentra listo
 class Departamento(models.Model):
     pais = models.ForeignKey(to=Pais, on_delete=models.CASCADE, related_name='Pais')
     nombre_departamento = models.CharField(max_length=200, unique=True)
@@ -59,11 +71,8 @@ class Departamento(models.Model):
         self.nombre_departamento = self.nombre_departamento.upper()
         super(Departamento, self).save()
 
-    # class Meta:
-    #     verbose_name_plural = 'Departamentos'
 
-
-# ====== Model Ciudad/Municipio ========================
+# ====== Model Ciudad/Municipio ======================== >= Se encuentra listo
 class Ciudad(models.Model):
     departamento = models.ForeignKey(to=Departamento, on_delete=models.CASCADE, related_name='Departamento')
     nombre_ciudad = models.CharField(max_length=200, unique=True)
@@ -93,8 +102,8 @@ class Ciudad(models.Model):
         ordering = ['nombre_ciudad']
 
 
-# ======================== Modelos de Sede Bodega ========================
-# ====== Modelo Sede ========================
+# ======================== Modelos de Sede Bodega ======================== >= Modelos listos
+# ====== Modelo Sede ======================== >= Se encuentra listo
 class Sede(models.Model):
     ESTADO = [
         ('O', 'Operativo'),
@@ -115,7 +124,7 @@ class Sede(models.Model):
         super(Sede, self).save()
 
 
-# ====== Modelo Bodega ========================
+# ====== Modelo Bodega ======================== >= Se encuentra listo
 class Bodega(models.Model):
     ESTADO = [
         ('Activo', 'Activo'),
@@ -137,14 +146,14 @@ class Bodega(models.Model):
 
 
 # ======================== Modelos Tipo ========================
-# ====== Tipo de Unidad ========================
+# ====== Tipo de Unidad ======================== Se encuentra listo pero falta un Signal para el cálculo de unidades
 class UnidadTipo(models.Model):
     ESTADO = [
         ('A', 'Activo'),
         ('I', 'Inactivo')
     ]
     tipo_unidad = models.CharField(max_length=50, primary_key=True)
-    estado_unidad = models.CharField(max_length=1, choices=ESTADO)
+    estado_unidad = models.CharField(max_length=1, choices=ESTADO, default='A')
 #    unidad_maestra = models.CharField(max_length=50)
     formula = models.DecimalField(decimal_places=6, max_digits=12)
 
@@ -156,7 +165,7 @@ class UnidadTipo(models.Model):
         return self.tipo_unidad.title()
 
 
-#====== Tipo de Movimiento ========================
+# ======================== Tipo de Movimiento ======================== >= Sin sentido y probablemente borraré
 class MovimientoTipo(models.Model):
     IN = 'Entrada_Bodega'
     OUT = 'Salida_Bodega'
@@ -181,7 +190,7 @@ class MovimientoTipo(models.Model):
             return('🔴')
 
 
-# ====== Modelo de periodos de facturación ========================
+# ====== Modelo de periodos de facturación ======================== >= Se encuentra listo y aún no sé como trabajarlo
 class Periodo(models.Model):
     fecha_inicio = models.DateField("Inicio del corte")
     fecha_fin = models.DateField("Fin del corte")
@@ -193,21 +202,15 @@ class Periodo(models.Model):
         txt = '{0} - {1}'.format(inicio, fin)
         return txt
 
-    # def cierre_de_estado(self):
-    #     fecha_cierre = timezone.now() >= self.fecha_fin>= timezone.now() - datetime.timedelta(days=7)
-    #     if fecha_cierre:
-    #         cambio = self.estado = False
-    #         return cambio
-
     def estado_del_periodo(self):
         if self.estado == True:
-            return 'Activo'
+            return '✅'
         else:
-            return 'Cerrado'
+            return '❌'
 
 
-# ======================== Modelo de Referencia ========================
-# ====== Referencia de productos ========================
+# ======================== Modelo de Referencia ======================== Modelos listos
+# ====== Referencia de productos ======================== >= Se encuentra listo
 class Referencia(models.Model):
     nombre_ref = models.CharField(max_length=100)
     unique_id = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
@@ -223,20 +226,19 @@ class Referencia(models.Model):
         self.nombre_ref = self.nombre_ref.upper()
         super(Referencia, self).save()
 
-STATUS_ENV = [
-    ('C', 'Cumple'),
-    ('NC', 'No Cumple')
-]
-# ====== Modelo Abstracto Base ========================
+
+# ======================== Modelos Abstractos ======================== >= Deberán ir al inicio
+# ====== Modelo Abstracto Base HEAD ======================== >= Se encuentra listo
 class CommonInfo(models.Model):
-    fecha = models.DateTimeField('Fecha y Hora')
+    fecha = models.DateTimeField('Fecha y Hora', auto_now_add=True, editable=False)
     transporte = models.CharField('Transportadora', max_length=100)
-    bodega_des = models.ForeignKey(Bodega, on_delete=models.PROTECT, verbose_name='Bodega De Ingreso')
+    bodega_des = models.ForeignKey(Bodega, on_delete=models.PROTECT, verbose_name='Bodega Destino')
 
     class Meta:
         abstract = True
 
 
+# ====== Modelo Abstracto Base BODY ======================== >= Se encuentra listo
 class CommonInfoRef(models.Model):
     referencia = models.ForeignKey(Referencia, on_delete=models.CASCADE)
     empaque = models.CharField(verbose_name='Empaque/Embalaje en General', max_length=2, choices=STATUS_ENV)
@@ -254,7 +256,7 @@ class CommonInfoRef(models.Model):
 
 
 # ======================== Modelo de Proveedor ========================
-# ====== Proveedor ========================
+# ====== Proveedor ======================== >= Se encuentra listo
 class Proveedor(models.Model):
     STATUS_CODE = [
         ('A', 'Activo'),
@@ -267,7 +269,7 @@ class Proveedor(models.Model):
     numero_tel_cel = models.CharField(max_length=10)
     correo = models.EmailField(verbose_name='Email', unique=True)
     ciudad = models.ForeignKey(Ciudad, on_delete=models.CASCADE)
-    estado_proveedor = models.CharField(max_length=1, choices=STATUS_CODE)
+    estado_proveedor = models.CharField(max_length=1, choices=STATUS_CODE, default='A')
 
     def __str__(self):
         return self.nombre_proveedor
@@ -280,37 +282,76 @@ class Proveedor(models.Model):
         verbose_name_plural = 'Proveedores'
 
 
-# ======================== Modelos de Pedidos ========================
-# ====== Modelo Pedido General ========================
-class Pedido(models.Model):
-    STATUS_CODE = [
-        ('SE', 'Solicitud Enviada'),
-        ('AP', 'Aprobado'),
-        ('CA', 'Cancelado'),
-        ('RZ', 'Rechazado'),
-        ('EN', 'Enviado'),
-        ('RC', 'Recibido')
-    ]
+# ======================== Modelos de Pedidos ======================== >= Modelos listos
+# ====== Modelo Pedido Proveedor a Sede ======================== >= Se encuentra listo
+class PedidoPB(models.Model):
     sede_solicitante = models.ForeignKey(Sede, on_delete=models.CASCADE)
     fecha_pedido = models.DateTimeField(auto_now_add=True, editable=False)
     estado_solicitud = models.CharField(max_length=2, choices=STATUS_CODE, default='SE')
     concepto_general = models.CharField(max_length=255, verbose_name='Concepto de solicitud')
-    bodega_solicitada = models.ForeignKey(Bodega, on_delete=models.CASCADE)
+    cotizacion_recibida = models.FileField(verbose_name='Cotización Recibida')
+    proveedor = models.ForeignKey(Proveedor, on_delete=models.CASCADE)
 
     def __str__(self):
-        return
+        txt = f'{self.sede_solicitante} ▶️ {self.proveedor}'
+        return txt
+
+    class Meta:
+        verbose_name = 'Pedido Proveedor a Bodega'
+        verbose_name_plural = 'Pedidos Proveedores a Bodega'
 
 
-# ====== Modelo Pedido Movimiento ========================
-class PedidoRef(models.Model):
-    pedido = models.ForeignKey(Pedido, on_delete=models.CASCADE)
+# ====== Modelo Pedido Referencia Proveedor a Bodega ======================== >= Se encuentra listo
+class PedidoRefPB(models.Model):
+    pedido = models.ForeignKey(PedidoPB, on_delete=models.CASCADE)
     referencia = models.ForeignKey(Referencia, on_delete=models.CASCADE)
     cantidad = models.IntegerField(verbose_name='Cantidad Solicitada')
     concepto = models.CharField(verbose_name='Concepto de Referencia', max_length=100)
 
+    def __str__(self):
+        txt = f'{self.referencia}'
+        return txt
 
-# ======================== Modelos de Inventario ========================
-# ====== Modelo Inventario Base ========================
+    class Meta:
+        verbose_name = 'Referencia de Pedido'
+        verbose_name_plural = 'Referencias de Pedidos'
+
+
+# ====== Modelo Pedido General Bodega a Bodega ======================== >= Se encuentra listo
+class PedidoBB(models.Model):
+    sede_solicitante = models.ForeignKey(Sede, on_delete=models.CASCADE)
+    fecha_pedido = models.DateTimeField(auto_now_add=True, editable=False)
+    concepto_general = models.CharField(max_length=255, verbose_name='Concepto de solicitud')
+    bodega_solicitada = models.ForeignKey(Bodega, on_delete=models.CASCADE, default=1)
+    estado_solicitud = models.CharField(max_length=2, choices=STATUS_CODE, default='SE')
+
+    def __str__(self):
+        txt = f'{self.sede_solicitante}'
+        return txt
+
+    class Meta:
+        verbose_name = 'Pedido Bodega a Bodega'
+        verbose_name_plural = 'Pedidos Bodega a Bodega'
+
+
+# ====== Modelo Pedido Movimiento ======================== >= Se encuentra listo
+class PedidoRefBB(models.Model):
+    pedido = models.ForeignKey(PedidoBB, on_delete=models.CASCADE)
+    referencia = models.ForeignKey(Referencia, on_delete=models.CASCADE)
+    cantidad = models.IntegerField(verbose_name='Cantidad Solicitada')
+    concepto = models.CharField(verbose_name='Concepto de Referencia', max_length=100)
+
+    def __str__(self):
+        txt = f'{self.referencia}'
+        return txt
+
+    class Meta:
+        verbose_name = 'Referencia de Pedido'
+        verbose_name_plural = 'Referencias de Pedidos'
+
+
+# ======================== Modelos de Inventario ======================== >= Aun falta construirlo nuevamente
+# ====== Modelo Inventario Base ======================== >= Puede ser así pero que Celery lo trabaje por tiempos
 class Inventario(models.Model):
     periodo = models.ForeignKey(Periodo, on_delete=models.CASCADE)
     bodega = models.ForeignKey(Bodega, on_delete=models.CASCADE)
@@ -333,15 +374,14 @@ class Inventario(models.Model):
         return txt.format(self.bodega)
 
 
-# ====== Modelo Inventario Movimiento ========================
+# ======================== Modelos de Ingreso de Insumos ======================== >= Modelos de movimiento de insumos entre bodegas
 
-
-# ======================== Modelos de Ingreso de Insumos ========================
-# ====== Modelo de ingreso de insumos HEAD P - B ========================
+# ====== Modelo de ingreso de insumos HEAD P - B ======================== >= Se encuentra listo
 class IngresoP_B(CommonInfo):
-    sede_ing = models.ForeignKey(Sede, on_delete=models.PROTECT)
+    sede_ing = models.ForeignKey(Sede, on_delete=models.PROTECT, verbose_name='Sede Destino', default=1)
     factura_prov = models.CharField('Factura Recibida', max_length=50)
     proveedor = models.ForeignKey(Proveedor, on_delete=models.PROTECT, verbose_name='Proveedor')
+    pedido = models.ForeignKey(PedidoPB, on_delete=models.CASCADE)
 
     def __str__(self):
         txt = f'{self.proveedor} ▶️ {self.bodega_des} 🟢'
@@ -352,7 +392,7 @@ class IngresoP_B(CommonInfo):
         verbose_name_plural = 'Ingresos Proveedores - Bodegas'
 
 
-# ====== Modelo de ingreso de insumos BODY P - B ========================
+# ====== Modelo de ingreso de insumos BODY P - B ======================== >= Se encuentra listo
 class IngresoRefPB(CommonInfoRef):
     ingreso = models.ForeignKey(IngresoP_B, on_delete=models.CASCADE, default=1, verbose_name='Ingreso Proveedor - Bodega')
 
@@ -364,9 +404,10 @@ class IngresoRefPB(CommonInfoRef):
         verbose_name_plural = 'Referencias de Ingresos'
 
 
-# ====== Modelo de ingreso de insumos HEAD B-B ========================
+# ===========================================================================================================================
+# ====== Modelo de ingreso de insumos HEAD B-B ======================== >= Se encuentra listo
 class IngresoB_B(CommonInfo):
-    pedido = models.ForeignKey(Pedido, on_delete=models.PROTECT)
+    pedido = models.ForeignKey(PedidoBB, on_delete=models.PROTECT)
 
     def __str__(self):
         txt = f'{self.pedido.bodega_solicitada} ▶️ {self.bodega_des} 🟢'
@@ -377,6 +418,7 @@ class IngresoB_B(CommonInfo):
         verbose_name_plural = 'Ingresos Bodegas - Bodegas'
 
 
+# ====== Modelo de ingreso de insumos HEAD B-B ======================== >= Se encuentra listo
 class IngresoRefBB(CommonInfoRef):
     ingreso = models.ForeignKey(IngresoB_B, on_delete=models.CASCADE, verbose_name='Ingreso Bodega - Bodega')
 
@@ -389,9 +431,10 @@ class IngresoRefBB(CommonInfoRef):
 
 
 # ======================== Modelos de Salida de Insumos ========================
-# ====== Modelo de Salida de insumos HEAD ========================
+# ====== Modelo de Salida de insumos HEAD ======================== >= Se encuentra listo
 class Salida(CommonInfo):
     sede_des = models.ForeignKey(Sede, on_delete=models.PROTECT, verbose_name='Sede Destino', default=1)
+    pedido = models.ForeignKey(PedidoBB, on_delete=models.CASCADE, verbose_name='Pedido')
 
     def __str__(self):
         txt = f'Salida {self.bodega_des} 🔴'
@@ -402,7 +445,7 @@ class Salida(CommonInfo):
         verbose_name_plural = 'Salidas de Referencias'
 
 
-# ====== Modelo de Salida de insumos BODY ========================
+# ====== Modelo de Salida de insumos BODY ======================== >= Se encuentra listo
 class SalidaRef(CommonInfoRef):
     salida = models.ForeignKey(Salida, on_delete=models.CASCADE)
 
@@ -415,7 +458,7 @@ class SalidaRef(CommonInfoRef):
 
 
 # ======================== Modelo de Saldos ========================
-# ====== Saldo Actual ========================
+# ====== Saldo Actual ======================== >= Se encuentra listo
 class SaldoActual(Modelo):
     referencia = models.ForeignKey(Referencia, on_delete=models.CASCADE)
     bodega = models.ForeignKey(Bodega, on_delete=models.CASCADE)
@@ -443,7 +486,7 @@ class SaldoHistorico(models.Model):
 
 
 # ======================== Facturación ========================
-# ====== Facturación Encabezado ========================
+# ====== Facturación Encabezado ======================== >= Se encuentra listo pero sin objetivo
 class FacturaEnc(Modelo):
     """
         Modelo de Factura Encabezado: *Mas parecido al modelo de traslado*
@@ -466,12 +509,9 @@ class FacturaEnc(Modelo):
     class Meta:
         verbose_name = 'Factura Encabezado'
         verbose_name_plural = 'Facturas Encabezados'
-        # permissions = [
-        #     ('sup_caja_fac', 'Permisos de CRUD para crear y editar facturas')
-        # ]
 
 
-# ====== Facturación Detalles ========================
+# ====== Facturación Detalles ======================== >= Se encuentra listo pero sin objetivo
 class FacturaDet(Modelo):
     """
         Modelo de Factura Detalle:
@@ -503,11 +543,9 @@ class FacturaDet(Modelo):
     class Meta:
         verbose_name = 'Factura Detalle'
         verbose_name_plural = 'Facturas Detalles'
-        # permissions = [
-        #     ('sup_caja_fac', 'Permisos de CRUD para crear y editar facturas')
-        # ]
 
 
+# ======================== Signals a mover ========================
 # ====== Signals de Referencias creadas ========================
 @receiver(post_save, sender=Referencia)
 def ingreso_referencia(sender, instance, **kwargs):
@@ -527,9 +565,9 @@ def ingreso_referencia(sender, instance, **kwargs):
             saldo.save()
 
 
-# ======= Signal de ingreso de insumos ========================
+# ======= Signal de ingreso de insumos P -B ========================
 @receiver(post_save, sender=IngresoRefPB)
-def ingreso_insumo(sender, instance, **kwargs):
+def ingreso_insumo_pb(sender, instance, **kwargs):
     bod_des = instance.ingreso.bodega_des.id
     referencia_id = instance.referencia.id
     saldo = SaldoActual.objects.get(Q(bodega__pk=bod_des) & Q(referencia__pk=referencia_id))
@@ -538,6 +576,26 @@ def ingreso_insumo(sender, instance, **kwargs):
         saldo.observacion = instance.observaciones
         saldo.temp_almacenamiento = instance.temp
         saldo.save()
+
+
+# ====== Signal de ingreso de insumos B - B
+@receiver(post_save, sender=IngresoRefBB)
+def ingreso_insumo_bb(sender, instance, **kwargs):
+    bod_des = instance.ingreso.bodega_des.id
+    referencia_id = instance.referencia.id
+    saldo = SaldoActual.objects.get(
+        Q(bodega__pk=bod_des) & Q(referencia__pk=referencia_id))
+    if saldo:
+        saldo.cantidad = saldo.cantidad + instance.cantidad
+        saldo.observacion = instance.observaciones
+        saldo.temp_almacenamiento = instance.temp
+        saldo.save()
+
+    pedido_ref = instance.ingreso.pedido.id
+    pedido = PedidoBB.objects.get(pk=pedido_ref)
+    if pedido:
+        pedido.estado_solicitud = 'RE'
+        pedido.save()
 
 
 # ======= Signal de salida de insumos ========================
@@ -549,6 +607,12 @@ def salida_insumo(sender, instance, **kwargs):
     if saldo_sal:
         saldo_sal.cantidad = saldo_sal.cantidad - instance.cantidad
         saldo_sal.save()
+
+    pedido_id = instance.ingreso.pedido.id
+    pedido = PedidoBB.objects.get(pk=pedido_id)
+    if pedido:
+        pedido.estado_solicitud = 'EN'
+        pedido.save()
 
 
 # ====== Signal de Bodega ligado a referencias de insumos ========================

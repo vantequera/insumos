@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from vmi.models import Pedido, Referencia
+from vmi.models import PedidoBB, Referencia
 
 
 class ProductoSerializer(serializers.ModelSerializer):

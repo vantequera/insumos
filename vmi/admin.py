@@ -3,7 +3,7 @@ from django.contrib import admin
 from vmi.models import (
     Bodega, Ciudad, FacturaDet, FacturaEnc, IngresoP_B, IngresoRefBB,
     IngresoRefPB, Inventario, MovimientoTipo, Pais, Departamento,
-    Pedido, Periodo, Proveedor, Referencia, SaldoActual,
+    PedidoBB, PedidoPB, PedidoRefBB, PedidoRefPB, Periodo, Proveedor, Referencia, SaldoActual,
     Salida, SalidaRef, Sede, UnidadTipo, IngresoB_B
 )
 
@@ -26,6 +26,16 @@ class IngresoInLineBB(admin.StackedInline):
 
 class SalidaInLine(admin.StackedInline):
     model = SalidaRef
+    extra = 1
+
+
+class PedidoBBInLine(admin.StackedInline):
+    model = PedidoRefBB
+    extra = 1
+
+
+class PedidoPBInLine(admin.StackedInline):
+    model = PedidoRefPB
     extra = 1
 
 
@@ -74,12 +84,24 @@ admin.site.register(Departamento, DepartamentoAdmin)
 admin.site.register(Ciudad, CiudadAdmin)
 admin.site.register(UnidadTipo)
 admin.site.register(Referencia, ReferenceAdmin)
-admin.site.register(Proveedor)
-admin.site.register(Pedido)
 admin.site.register(MovimientoTipo, MovimientoTipoAdmin)
 admin.site.register(FacturaEnc, FacturaAdmin)
 admin.site.register(Bodega)
 admin.site.register(Sede, SedeAdmin)
+
+@admin.register(Proveedor)
+class ProveedorAdmin(admin.ModelAdmin):
+    list_display = ('__str__', 'numero_tel_1', 'estado_proveedor')
+
+@admin.register(PedidoPB)
+class PedidoPBAdmin(admin.ModelAdmin):
+    inlines = [PedidoPBInLine]
+    list_display = ('__str__',)
+
+@admin.register(PedidoBB)
+class PedidoAdmin(admin.ModelAdmin):
+    inlines = [PedidoBBInLine]
+    list_display = ('__str__', 'fecha_pedido', 'bodega_solicitada')
 
 # ======================== Inventario ========================
 @admin.register(Inventario)
