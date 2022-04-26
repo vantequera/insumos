@@ -284,61 +284,29 @@ class Proveedor(models.Model):
 # ====== Modelo Pedido General ========================
 class Pedido(models.Model):
     STATUS_CODE = [
-        ('A', 'Activo'),
-        ('E', 'En Curso'),
-        ('C', 'Cancelado'),
-        ('P', 'Pago')
+        ('SE', 'Solicitud Enviada'),
+        ('AP', 'Aprobado'),
+        ('CA', 'Cancelado'),
+        ('RZ', 'Rechazado'),
+        ('EN', 'Enviado'),
+        ('RC', 'Recibido')
     ]
-    proveedor_id = models.ForeignKey(to=Proveedor, on_delete=models.CASCADE)
+    sede_solicitante = models.ForeignKey(Sede, on_delete=models.CASCADE)
     fecha_pedido = models.DateTimeField(auto_now_add=True, editable=False)
-    estado_orden = models.CharField(max_length=1, choices=STATUS_CODE, default='A')
-    valor_pedido = models.ForeignKey('MovimientoPedido', models.DO_NOTHING, db_column='valor_pedido', default=0, related_name='+')
+    estado_solicitud = models.CharField(max_length=2, choices=STATUS_CODE, default='SE')
+    concepto_general = models.CharField(max_length=255, verbose_name='Concepto de solicitud')
+    bodega_solicitada = models.ForeignKey(Bodega, on_delete=models.CASCADE)
 
-    # def save(self):
-    #     movimiento = Pedido.objects.all().get(id=self.id)
-    #     movimiento.valor_pedido.valor_movimiento = F('valor_movimiento')
-    #     self.valor_pedido = movimiento.valor_pedido.valor_movimiento
-    #     super(Pedido, self).save()
+    def __str__(self):
+        return
 
 
 # ====== Modelo Pedido Movimiento ========================
-class MovimientoPedido(Pedido):
-    referencia_id = models.ManyToManyField(Referencia)
-    cantidad_solicitada = models.DecimalField(decimal_places=3, max_digits=6, default=0)
-    tipo_unidad = models.ForeignKey(to=UnidadTipo, on_delete=models.CASCADE, default='A')
-    valor_movimiento = models.DecimalField(decimal_places=2, max_digits=12, default=0)
-
-# ====== Calculo de valor total ==========================
-    def _get_valor_compra(self):
-        return self.cantidad_solicitada*self.valor_movimiento
-
-    valor_compra = property(_get_valor_compra) # <== Ya no es necesario
-
-
-# ====== Modelo Pedido Proveedores ========================
-class ProveedorPedido(Pedido):
-    cantidad_compra = models.DecimalField(decimal_places=3, max_digits=6, default=0)
-    valor_orden = models.DecimalField(decimal_places=3, max_digits=6, default=0)
-
-
-# ======================== Modelos de Facturación ========================
-# ====== Modelo Factura General ========================
-class Factura(models.Model):
-    proveedor_id = models.ForeignKey(to=Proveedor, on_delete=models.CASCADE)
-    fecha_creacion = models.DateTimeField(auto_now_add=True, editable=False,)
-    fecha_facturacion = models.DateTimeField()
-    concepto = models.CharField(max_length=100)
-
-    def __str__(self):
-        return self.concepto
-
-
-# ====== Modelo Factura de Movimiento ========================
-# ====== Modelo Deprecado
-class MovimientoFactura(Factura):
-    referencia_id = models.ManyToManyField(Referencia)
-    cantidad_compra = models.DecimalField(max_digits=12, decimal_places=3)
-    unidad_compra = models.ForeignKey(to=UnidadTipo, on_delete=models.CASCADE)
+class PedidoRef(models.Model):
+    pedido = models.ForeignKey(Pedido, on_delete=models.CASCADE)
+    referencia = models.ForeignKey(Referencia, on_delete=models.CASCADE)
+    cantidad = models.IntegerField(verbose_name='Cantidad Solicitada')
+    concepto = models.CharField(verbose_name='Concepto de Referencia', max_length=100)
 
 
 # ======================== Modelos de Inventario ========================
@@ -370,13 +338,13 @@ class Inventario(models.Model):
 
 # ======================== Modelos de Ingreso de Insumos ========================
 # ====== Modelo de ingreso de insumos HEAD P - B ========================
-class Ingreso(CommonInfo):
+class IngresoP_B(CommonInfo):
     sede_ing = models.ForeignKey(Sede, on_delete=models.PROTECT)
     factura_prov = models.CharField('Factura Recibida', max_length=50)
     proveedor = models.ForeignKey(Proveedor, on_delete=models.PROTECT, verbose_name='Proveedor', null=True)
 
     def __str__(self):
-        txt = f'Ingreso {self.bodega_des} 🟢'
+        txt = f'{self.proveedor} ▶️ {self.bodega_des} 🟢'
         return txt
 
     class Meta:
@@ -384,23 +352,9 @@ class Ingreso(CommonInfo):
         verbose_name_plural = 'Ingresos Proveedores - Bodegas'
 
 
-# ====== Modelo de ingreso de insumos HEAD B-B ========================
-# class Ingreso(CommonInfo):
-#     bodega_exp = models.ForeignKey(Bodega, on_delete=models.PROTECT)
-#     pedido = models.ForeignKey(Pedido, on_delete=models.PROTECT)
-
-#     def __str__(self):
-#         txt = f'Ingreso {self.bodega_des} 🟢'
-#         return txt
-
-#     class Meta:
-#         verbose_name = 'Ingreso Bodega - Bodega'
-#         verbose_name_plural = 'Ingresos Bodegas - Bodegas'
-
-
-# ====== Modelo de ingreso de insumos BODY ========================
-class IngresoRef(CommonInfoRef):
-    ingreso = models.ForeignKey(Ingreso, on_delete=models.CASCADE, verbose_name='Factura de Ingreso')
+# ====== Modelo de ingreso de insumos BODY P - B ========================
+class IngresoRefPB(CommonInfoRef):
+    ingreso = models.ForeignKey(IngresoP_B, on_delete=models.CASCADE, verbose_name='Factura de Ingreso')
 
     def __str__(self):
         return str(self.referencia_id)
@@ -408,6 +362,30 @@ class IngresoRef(CommonInfoRef):
     class Meta:
         verbose_name = 'Referencia de Ingreso'
         verbose_name_plural = 'Referencias de Ingresos'
+
+
+# ====== Modelo de ingreso de insumos HEAD B-B ========================
+class IngresoB_B(CommonInfo):
+    pedido = models.ForeignKey(Pedido, on_delete=models.PROTECT)
+
+    def __str__(self):
+        txt = f'{self.pedido.bodega_solicitada} ▶️ {self.bodega_des} 🟢'
+        return txt
+
+    class Meta:
+        verbose_name = 'Ingreso Bodega - Bodega'
+        verbose_name_plural = 'Ingresos Bodegas - Bodegas'
+
+
+class IngresoRefBB(CommonInfoRef):
+    ingreso = models.ForeignKey(IngresoB_B, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return str(self.referencia_id)
+
+    class Meta:
+        verbose_name = 'Referencia Ingreso Bodega - Bodega'
+        verbose_name_plural = 'Referencias Ingresos Bodegas - Bodegas'
 
 
 # ======================== Modelos de Salida de Insumos ========================
@@ -443,11 +421,7 @@ class SaldoActual(Modelo):
     bodega = models.ForeignKey(Bodega, on_delete=models.CASCADE)
     cantidad = models.DecimalField(decimal_places=2, max_digits=6, default=0)
     observacion = models.CharField(verbose_name='Observaciones', max_length=100, default='C')
-    temp_almacenamiento = models.CharField(
-        verbose_name='Temperatura de almacenamiento',
-        max_length=5,
-        default='22'
-    )
+    temp_almacenamiento = models.CharField(verbose_name='Temperatura de almacenamiento', max_length=5, default='22')
 
     def __str__(self):
         txt = '{0}'.format(self.referencia)
@@ -554,7 +528,7 @@ def ingreso_referencia(sender, instance, **kwargs):
 
 
 # ======= Signal de ingreso de insumos ========================
-@receiver(post_save, sender=IngresoRef)
+@receiver(post_save, sender=IngresoRefPB)
 def ingreso_insumo(sender, instance, **kwargs):
     bod_des = instance.ingreso.bodega_des.id
     referencia_id = instance.referencia.id

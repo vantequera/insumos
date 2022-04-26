@@ -1,6 +1,11 @@
 import site
 from django.contrib import admin
-from vmi.models import Bodega, Ciudad, Factura, FacturaDet, FacturaEnc, Ingreso, IngresoRef, Inventario, MovimientoFactura, MovimientoTipo, Pais, Departamento, MovimientoPedido, Pedido, Periodo, Proveedor, ProveedorPedido, Referencia, SaldoActual, Salida, SalidaRef, Sede, UnidadTipo
+from vmi.models import (
+    Bodega, Ciudad, FacturaDet, FacturaEnc, IngresoP_B, IngresoRefBB,
+    IngresoRefPB, Inventario, MovimientoTipo, Pais, Departamento,
+    Pedido, Periodo, Proveedor, Referencia, SaldoActual,
+    Salida, SalidaRef, Sede, UnidadTipo, IngresoB_B
+)
 
 
 # ======================== StacksInLine ========================
@@ -9,8 +14,13 @@ class FacturaInLine(admin.StackedInline):
     extra = 1
 
 
-class IngresoInLine(admin.StackedInline):
-    model = IngresoRef
+class IngresoInLinePB(admin.StackedInline):
+    model = IngresoRefPB
+    extra = 1
+
+
+class IngresoInLineBB(admin.StackedInline):
+    model = IngresoRefBB
     extra = 1
 
 
@@ -64,35 +74,36 @@ admin.site.register(Departamento, DepartamentoAdmin)
 admin.site.register(Ciudad, CiudadAdmin)
 admin.site.register(UnidadTipo)
 admin.site.register(Referencia, ReferenceAdmin)
-admin.site.register(Factura)
-admin.site.register(MovimientoFactura)
 admin.site.register(Proveedor)
 admin.site.register(Pedido)
 admin.site.register(MovimientoTipo, MovimientoTipoAdmin)
-admin.site.register(MovimientoPedido)
-# admin.site.register(ProveedorPedido)
 admin.site.register(FacturaEnc, FacturaAdmin)
-# admin.site.register(FacturaDet, Factura2Admin)
 admin.site.register(Bodega)
 admin.site.register(Sede, SedeAdmin)
 
-# Inventario
+# ======================== Inventario ========================
 @admin.register(Inventario)
 class InventarioAdmin(admin.ModelAdmin):
     list_display = ('__str__', 'saldo_final', 'tipo_unidad', 'periodo')
 
-# Saldo Actual
+# ======================== Saldo Actual ========================
 @admin.register(SaldoActual)
 class SaldoActualAdmin(admin.ModelAdmin):
     list_display = ('__str__', 'cantidad','temp_alm', 'bodega')
 
-# Ingreso
-@admin.register(Ingreso)
-class IngresoAdmin(admin.ModelAdmin):
-    inlines = [IngresoInLine]
+# ======================== Ingreso Proveedor - Bodega ========================
+@admin.register(IngresoP_B)
+class IngresoAdminPB(admin.ModelAdmin):
+    inlines = [IngresoInLinePB]
     list_display = ('__str__', 'factura_prov', 'proveedor')
 
-# Ingreso
+# ======================== Ingreso Bodega - Bodega ========================
+@admin.register(IngresoB_B)
+class IngresoAdminBB(admin.ModelAdmin):
+    inlines = [IngresoInLineBB]
+    list_display = ('__str__', 'pedido', 'bodega_des')
+
+# ======================== Salida ========================
 @admin.register(Salida)
 class IngresoAdmin(admin.ModelAdmin):
     inlines = [SalidaInLine]
