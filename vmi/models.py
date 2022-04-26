@@ -341,7 +341,7 @@ class Inventario(models.Model):
 class IngresoP_B(CommonInfo):
     sede_ing = models.ForeignKey(Sede, on_delete=models.PROTECT)
     factura_prov = models.CharField('Factura Recibida', max_length=50)
-    proveedor = models.ForeignKey(Proveedor, on_delete=models.PROTECT, verbose_name='Proveedor', null=True)
+    proveedor = models.ForeignKey(Proveedor, on_delete=models.PROTECT, verbose_name='Proveedor')
 
     def __str__(self):
         txt = f'{self.proveedor} ▶️ {self.bodega_des} 🟢'
@@ -354,7 +354,7 @@ class IngresoP_B(CommonInfo):
 
 # ====== Modelo de ingreso de insumos BODY P - B ========================
 class IngresoRefPB(CommonInfoRef):
-    ingreso = models.ForeignKey(IngresoP_B, on_delete=models.CASCADE, verbose_name='Factura de Ingreso')
+    ingreso = models.ForeignKey(IngresoP_B, on_delete=models.CASCADE, default=1, verbose_name='Ingreso Proveedor - Bodega')
 
     def __str__(self):
         return str(self.referencia_id)
@@ -378,7 +378,7 @@ class IngresoB_B(CommonInfo):
 
 
 class IngresoRefBB(CommonInfoRef):
-    ingreso = models.ForeignKey(IngresoB_B, on_delete=models.CASCADE)
+    ingreso = models.ForeignKey(IngresoB_B, on_delete=models.CASCADE, verbose_name='Ingreso Bodega - Bodega')
 
     def __str__(self):
         return str(self.referencia_id)
