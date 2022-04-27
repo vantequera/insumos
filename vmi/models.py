@@ -375,7 +375,6 @@ class Inventario(models.Model):
 
 
 # ======================== Modelos de Ingreso de Insumos ======================== >= Modelos de movimiento de insumos entre bodegas
-
 # ====== Modelo de ingreso de insumos HEAD P - B ======================== >= Se encuentra listo
 class IngresoP_B(CommonInfo):
     sede_ing = models.ForeignKey(Sede, on_delete=models.PROTECT, verbose_name='Sede Destino', default=1)
@@ -479,10 +478,11 @@ class SaldoActual(Modelo):
         verbose_name_plural = 'Saldos Actuales'
 
 
-
 # ====== Saldo Histórico ========================
 class SaldoHistorico(models.Model):
     pass
+# Encontre la solucion a la tabla de saldo historico y de inventario,
+# realizarlas sin llaves foraneas, las completare con los signals.
 
 
 # ======================== Facturación ========================
