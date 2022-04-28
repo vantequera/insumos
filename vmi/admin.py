@@ -57,10 +57,6 @@ class PeriodoAdmin(admin.ModelAdmin):
     list_display = ('__str__', 'estado_del_periodo')
 
 
-class ReferenceAdmin(admin.ModelAdmin):
-    list_display = ('__str__', 'codigo_ean8', 'unique_id')
-
-
 class FacturaAdmin(admin.ModelAdmin):
     inlines = [FacturaInLine]
     list_display = ('__str__', 'id', 'fecha_modifica', 'sub_total', 'descuento', 'total')
@@ -83,11 +79,14 @@ admin.site.register(Pais, PaisAdmin)
 admin.site.register(Departamento, DepartamentoAdmin)
 admin.site.register(Ciudad, CiudadAdmin)
 admin.site.register(UnidadTipo)
-admin.site.register(Referencia, ReferenceAdmin)
 admin.site.register(MovimientoTipo, MovimientoTipoAdmin)
 admin.site.register(FacturaEnc, FacturaAdmin)
 admin.site.register(Bodega)
 admin.site.register(Sede, SedeAdmin)
+
+@admin.register(Referencia)
+class ReferenceAdmin(admin.ModelAdmin):
+    list_display = ('__str__', 'marca_ref', 'invima')
 
 @admin.register(Proveedor)
 class ProveedorAdmin(admin.ModelAdmin):
@@ -111,7 +110,7 @@ class InventarioAdmin(admin.ModelAdmin):
 # ======================== Saldo Actual ========================
 @admin.register(SaldoActual)
 class SaldoActualAdmin(admin.ModelAdmin):
-    list_display = ('__str__', 'cantidad','temp_alm', 'bodega')
+    list_display = ('__str__', 'cantidad', 'ocupacion', 'temp_alm', 'bodega')
 
 # ======================== Ingreso Proveedor - Bodega ========================
 @admin.register(IngresoP_B)

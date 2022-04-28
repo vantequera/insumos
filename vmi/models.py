@@ -213,7 +213,11 @@ class Periodo(models.Model):
 # ====== Referencia de productos ======================== >= Se encuentra listo
 class Referencia(models.Model):
     nombre_ref = models.CharField(max_length=100)
-    unique_id = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
+    marca_ref = models.CharField(verbose_name='Marca de la referencia', max_length=100)
+    composicion = models.CharField(verbose_name='Composición - Principio Activo', max_length=100)
+    concentracion = models.CharField(verbose_name='Cocentración', max_length=100)
+    invima = models.CharField(verbose_name='Reg. Invima', max_length=100)
+    almacenamiento = models.CharField(verbose_name='Almacenamiento', max_length=100)
     codigo_ean8 = models.CharField(max_length=8, unique=True)
     codigo_ean13 = models.CharField(max_length=13, unique=True)
     codigo_ean128 = models.CharField(max_length=50)
@@ -246,10 +250,10 @@ class CommonInfoRef(models.Model):
     fecha_vencimiento = models.DateField(verbose_name='Fecha de Vencimiento')
     cantidad = models.IntegerField('Cantidad Referencia Recibida')
     tipo_unidad = models.ForeignKey(UnidadTipo, on_delete=models.CASCADE)
-    observaciones = models.CharField('Observaciones', max_length=200)
-    integridad = models.CharField('Integridad de la Referencia', max_length=2, choices=STATUS_ENV)
-    apariencia = models.CharField('Apariencia de la Referencia', max_length=2, choices=STATUS_ENV)
     temp = models.CharField('Temperatura de Almacenamiento', max_length=2)
+    apariencia = models.CharField('Apariencia de la Referencia', max_length=2, choices=STATUS_ENV)
+    integridad = models.CharField('Integridad de la Referencia', max_length=2, choices=STATUS_ENV)
+    observaciones = models.CharField('Observaciones', max_length=200)
 
     class Meta:
         abstract = True
@@ -473,6 +477,21 @@ class SaldoActual(Modelo):
         text = f'{self.temp_almacenamiento} °C'
         return text
 
+    def ocupacion(self):
+        saldo = float(self.cantidad)
+        capacidad_bodega = 1234.0
+        ocupacion = (saldo / capacidad_bodega) * 100.0
+        if ocupacion >= 100.0:
+            return f'{ocupacion}% 🟢'
+        if ocupacion <= 100.0:
+            return f'{ocupacion}% 🟡'
+        if ocupacion <= 75.0:
+            return f'{ocupacion}% 🟠'
+        if ocupacion <= 50.0:
+            return f'{ocupacion}% 🔴'
+        if ocupacion <= 30.0:
+            return f'{ocupacion}% ⚠️'
+
     class Meta:
         verbose_name = 'Saldo Actual'
         verbose_name_plural = 'Saldos Actuales'
@@ -603,10 +622,10 @@ def ingreso_insumo_bb(sender, instance, **kwargs):
 def salida_insumo(sender, instance, **kwargs):
     bod_des = instance.salida.bodega_des.id
     referencia_id = instance.referencia.id
-    saldo_sal = SaldoActual.objects.get(Q(bodega__pk=bod_des) & Q(referencia__pk=referencia_id))
-    if saldo_sal:
-        saldo_sal.cantidad = saldo_sal.cantidad - instance.cantidad
-        saldo_sal.save()
+    saldo_act = SaldoActual.objects.get(Q(bodega__pk=bod_des) & Q(referencia__pk=referencia_id))
+    if saldo_act:
+        saldo_act.cantidad = saldo_act.cantidad - instance.cantidad
+        saldo_act.save()
 
     pedido_id = instance.ingreso.pedido.id
     pedido = PedidoBB.objects.get(pk=pedido_id)
@@ -673,3 +692,18 @@ def detalle_fac_guardar(sender, instance, **kwargs):
 
     else:
         raise ValidationError
+
+
+@receiver(post_save, sender=IngresoP_B)
+def reg_inventario_b_b(sender, instance, **kwargs):
+    pass
+
+
+@receiver(post_save, sender=Salida)
+def reg_inventario_salida(sender, instance, **kwargs):
+    pass
+
+
+@receiver(post_save, sender=IngresoB_B)
+def reg_inventario_p_b(sender, instance, **kwargs):
+    pass
