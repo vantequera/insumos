@@ -250,7 +250,7 @@ class CommonInfoRef(models.Model):
     fecha_vencimiento = models.DateField(verbose_name='Fecha de Vencimiento')
     cantidad = models.IntegerField('Cantidad Referencia Recibida')
     tipo_unidad = models.ForeignKey(UnidadTipo, on_delete=models.CASCADE)
-    temp = models.CharField('Temperatura de Almacenamiento', max_length=2)
+    temp = models.CharField('Temperatura de Almacenamiento', max_length=3)
     apariencia = models.CharField('Apariencia de la Referencia', max_length=2, choices=STATUS_ENV)
     integridad = models.CharField('Integridad de la Referencia', max_length=2, choices=STATUS_ENV)
     observaciones = models.CharField('Observaciones', max_length=200)
@@ -458,6 +458,11 @@ class SalidaRef(CommonInfoRef):
     class Meta:
         verbose_name = 'Referencia de Salida'
         verbose_name_plural = 'Referencias de Salidas'
+
+
+# ======================== Modelo de Gasto Interno ======================== >= Por construir un modelo para gastos de dia a dia o Semanal
+class GastoInterno(models.Model):
+    pass
 
 
 # ======================== Modelo de Saldos ========================
