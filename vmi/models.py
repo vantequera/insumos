@@ -569,6 +569,66 @@ class FacturaDet(Modelo):
         verbose_name_plural = 'Facturas Detalles'
 
 
+# ======================== Modelo Control de Vencimiento ========================
+# ====== Modelo de control de Vencimiento HEAD ========================
+class ControlVencimiento(models.Model):
+    """
+        Modelo de control de vencimiento de insumos HEAD
+    """
+    sede = models.ForeignKey(Sede, on_delete=models.CASCADE)
+    bodega = models.ForeignKey(Bodega, on_delete=models.CASCADE)
+    fecha_crea = models.DateTimeField(auto_now_add=True)
+    fecha_asigna = models.DateField(verbose_name='Fecha Asignada')
+    responsable = models.CharField(verbose_name='Persona Responsable', max_length=100)
+
+    def __str__(self):
+        txt = f'Control de Vencimiento {self.bodega}'
+        return txt
+
+    class Meta:
+        verbose_name = 'Control de Vencimiento'
+        verbose_name_plural = 'Controles de Vencimientos'
+
+
+# ====== Modelo de Control de Vencimiento BODY ========================
+class ControlVencimientoBody(models.Model):
+    """
+        Modelo de control de vencimiento de insumos BODY
+    """
+    control_vencimiento = models.ForeignKey(ControlVencimiento, on_delete=models.CASCADE)
+    referencia = models.ForeignKey(Referencia, on_delete=models.CASCADE)
+    cantidad = models.DecimalField(max_digits=6, decimal_places=2)
+    observaciones = models.CharField(verbose_name='Observaciones', max_length=200)
+    color = models.CharField(verbose_name='Color de Semaforizacion')
+    fecha_vence = models.DateField(verbose_name='Fecha de Vencimiento')
+
+    def __str__(self):
+        txt = f'{self.referencia} {self.color}'
+        return txt
+
+    class Meta:
+        verbose_name = 'Referencia Vencida'
+        verbose_name_plural = 'Referencias Vencidas'
+
+
+# ======================== Modelo Limpieza de Equipos ========================
+class LimpiezaEquipos(models.Model):
+    fecha_crea = models.DateTimeField(auto_now_add=True, verbose_name='Fecha de Creacion')
+    fecha_asigna = models.DateField(verbose_name='Fecha Limpieza')
+    nombre_equipo = models.CharField(verbose_name='Nombre del Equipo', max_length=100)
+    prod_util = models.CharField(verbose_name='Producto Utilizado en Limpieza', max_length=100)
+    persona_realiza = models.CharField(verbose_name='Persona que Realizo', max_length=100)
+    observaciones = models.CharField(verbose_name='Observaciones', max_length=200)
+
+    def __str__(self):
+        txt = f'{self.nombre_equipo} ▶️ {self.persona_realiza}'
+        return txt
+
+    class Meta:
+        verbose_name = 'Limpieza de Equipos'
+        verbose_name_plural = 'Limpiezas en Equipos'
+
+
 # ======================== Signals a mover ========================
 # ====== Signals de Referencias creadas ========================
 @receiver(post_save, sender=Referencia)
